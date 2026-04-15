@@ -1,20 +1,20 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  ImageBackground,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Image,
+    Image,
+    ImageBackground,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function Index() {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   return (
     <ImageBackground
-      source={require("../../assets/images/fondos/fondo.png")}
+      source={require("../../../../../assets/images/fondos/fondo.png")}
       resizeMode="cover"
       style={{
         flex: 1,
@@ -69,7 +69,7 @@ export default function Index() {
             {/* Logo */}
             <View style={{ alignItems: "center", marginVertical: 10 }}>
               <Image
-                source={require("../../assets/images/logos/logoCuadrado.png")}
+                source={require("../../../../../assets/images/logos/logoCuadrado.png")}
                 style={{
                   width: 90,
                   height: 90,
