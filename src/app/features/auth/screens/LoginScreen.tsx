@@ -14,7 +14,11 @@ export default function Index() {
 
   return (
     <ImageBackground
+<<<<<<<< Updated upstream:src/app/features/auth/screens/LoginScreen.tsx
       source={require("../../../../../assets/images/fondos/fondo.png")}
+========
+      source={require("../../../../assets/images/fondos/fondo.png")}
+>>>>>>>> Stashed changes:src/features/auth/screens/LoginScreen.tsx
       resizeMode="cover"
       style={{
         flex: 1,
@@ -69,7 +73,11 @@ export default function Index() {
             {/* Logo */}
             <View style={{ alignItems: "center", marginVertical: 10 }}>
               <Image
+<<<<<<<< Updated upstream:src/app/features/auth/screens/LoginScreen.tsx
                 source={require("../../../../../assets/images/logos/logoCuadrado.png")}
+========
+                source={require("../../../../assets/images/logos/logoCuadrado.png")}
+>>>>>>>> Stashed changes:src/features/auth/screens/LoginScreen.tsx
                 style={{
                   width: 90,
                   height: 90,
