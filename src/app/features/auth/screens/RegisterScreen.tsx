@@ -1,348 +1,336 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
+  Alert,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 
 export default function RegisterScreen() {
   const router = useRouter();
+
   const [nombre, setNombre] = useState("");
-  const [apellido, setApellido] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordVisible, setPasswordVisible] = useState(false);
+
+  const [apellidoInput, setApellidoInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
   const [genero, setGenero] = useState<"nino" | "nina" | null>(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleRegister = () => {
-    if (!nombre || !apellido || !email || !password || !genero) {
-      Alert.alert("¡Espera!", "Por favor completa todos los campos.");
+    if (!nombre || !apellidoInput || !emailInput || !password || !genero) {
+      Alert.alert("Completa todos los campos");
       return;
     }
+
     if (password.length < 8) {
-      Alert.alert("Contraseña muy corta", "Debe tener al menos 8 caracteres.");
+      Alert.alert("Mínimo 8 caracteres");
       return;
     }
-    Alert.alert("¡Bienvenido!", `¡Hola ${nombre}! Tu cuenta fue creada. 🎉`, [
-      { text: "¡A aprender!", onPress: () => router.replace("/features/home/screens/HomeScreen") },
-    ]);
+
+    const usuario = {
+      nombre: `${nombre} ${apellidoInput}`,
+      username: emailInput,
+      password: password,
+      idRol: 2,
+    };
+
+    console.log(usuario);
+
+    Alert.alert("¡Cuenta creada!", `Bienvenido ${nombre}`);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <ImageBackground
+      source={require("../../../../../assets/images/fondos/fondo.png")}
+      resizeMode="cover"
+      style={{ flex: 1 }}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {/* Header azul degradado */}
-        <View style={styles.headerBg}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Crea tu Cuenta</Text>
-          <Text style={styles.headerSubtitle}>¡Únete a la aventura!</Text>
-        </View>
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            paddingHorizontal: 10,
+          }}
+        >
+          <View style={{ padding: 10 }}>
+            {/* Card */}
+            <View style={styles.card}>
+            <Text style={styles.title}>Crea tu Cuenta</Text>
+            <Text style={styles.subtitle}>¡Únete a la aventura!</Text>
 
-        {/* Formulario */}
-        <View style={styles.form}>
-          {/* Nombre y apellido */}
-          <View style={styles.row}>
-            <View style={[styles.halfField]}>
-              <Text style={styles.label}>PRIMER NOMBRE</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Ej. Leo"
-                placeholderTextColor="#b0bec5"
-                value={nombre}
-                onChangeText={setNombre}
+            <View style={styles.logoWrap}>
+              <Image
+                source={require("../../../../../assets/images/logos/logoCuadrado.png")}
+                style={styles.logoImage}
               />
             </View>
-            <View style={[styles.halfField]}>
-              <Text style={styles.label}>PRIMER APELLIDO</Text>
+
+            <View style={styles.row}>
+              <View style={styles.half}>
+                <Text style={styles.label}>PRIMER NOMBRE</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ej. Leo"
+                  placeholderTextColor="#94a3b8"
+                  value={nombre}
+                  onChangeText={setNombre}
+                />
+              </View>
+
+              <View style={styles.half}>
+                <Text style={styles.label}>PRIMER APELLIDO</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Ej. Pérez"
+                  placeholderTextColor="#94a3b8"
+                  value={apellidoInput}
+                  onChangeText={setApellidoInput}
+                />
+              </View>
+            </View>
+
+            <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
+            <View style={styles.inputRow}>
+              <Ionicons name="mail-outline" size={18} color="#64748b" />
               <TextInput
-                style={styles.input}
-                placeholder="Ej. Pérez"
-                placeholderTextColor="#b0bec5"
-                value={apellido}
-                onChangeText={setApellido}
+                style={styles.inputInner}
+                placeholder="ejemplo@correo.com"
+                placeholderTextColor="#94a3b8"
+                value={emailInput}
+                onChangeText={(t) => {
+                  setEmailInput(t);
+                  setUsername(t);
+                }}
               />
             </View>
-          </View>
 
-          {/* Email */}
-          <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="mail-outline" size={18} color="#94a3b8" />
-            <TextInput
-              style={styles.inputInner}
-              placeholder="ejemplo@correo.com"
-              placeholderTextColor="#b0bec5"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-
-          {/* Contraseña */}
-          <Text style={styles.label}>CREA TU CONTRASEÑA</Text>
-          <View style={styles.inputRow}>
-            <Ionicons name="lock-closed-outline" size={18} color="#94a3b8" />
-            <TextInput
-              style={styles.inputInner}
-              placeholder="Mínimo 8 caracteres"
-              placeholderTextColor="#b0bec5"
-              secureTextEntry={!passwordVisible}
-              value={password}
-              onChangeText={setPassword}
-            />
-            <TouchableOpacity onPress={() => setPasswordVisible(!passwordVisible)}>
-              <Ionicons
-                name={passwordVisible ? "eye-off-outline" : "eye-outline"}
-                size={18}
-                color="#94a3b8"
+            <Text style={styles.label}>CONTRASEÑA</Text>
+            <View style={styles.inputRow}>
+              <Ionicons name="lock-closed-outline" size={18} color="#64748b" />
+              <TextInput
+                style={styles.inputInner}
+                placeholder="Mínimo 8 caracteres"
+                placeholderTextColor="#94a3b8"
+                secureTextEntry={!passwordVisible}
+                value={password}
+                onChangeText={setPassword}
               />
-            </TouchableOpacity>
-          </View>
-
-          {/* Género */}
-          <Text style={[styles.label, { textAlign: "center", marginTop: 16 }]}>
-            ¿ERES NIÑO O NIÑA?
-          </Text>
-          <View style={styles.generoRow}>
-            <TouchableOpacity
-              style={[
-                styles.generoBtn,
-                genero === "nino" && styles.generoBtnActive,
-              ]}
-              onPress={() => setGenero("nino")}
-            >
-              <Text style={styles.generoEmoji}>🧒</Text>
-              <Text
-                style={[
-                  styles.generoLabel,
-                  genero === "nino" && styles.generoLabelActive,
-                ]}
+              <TouchableOpacity
+                onPress={() => setPasswordVisible(!passwordVisible)}
               >
-                Niño
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.generoBtn,
-                genero === "nina" && styles.generoBtnActiveNina,
-              ]}
-              onPress={() => setGenero("nina")}
-            >
-              <Text style={styles.generoEmoji}>👧</Text>
-              <Text
-                style={[
-                  styles.generoLabel,
-                  genero === "nina" && styles.generoLabelActive,
-                ]}
-              >
-                Niña
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <Ionicons
+                  name={passwordVisible ? "eye-off-outline" : "eye-outline"}
+                  size={18}
+                  color="#64748b"
+                />
+              </TouchableOpacity>
+            </View>
 
-          {/* Botón */}
-          <TouchableOpacity style={styles.registerBtn} onPress={handleRegister}>
-            <Text style={styles.registerBtnText}>¡REGISTRARME!</Text>
-          </TouchableOpacity>
-
-          {/* Login */}
-          <Text style={styles.loginText}>
-            ¿Ya tienes cuenta?{" "}
-            <Text
-              style={styles.loginLink}
-              onPress={() => router.replace("/login")}
-            >
-              Inicia sesión
+            <Text style={styles.centerLabel}>
+              ¿ERES NIÑO O NIÑA?
             </Text>
-          </Text>
 
-          {/* Barra de colores */}
-          <View style={styles.colorBar}>
-            <View style={[styles.colorSegment, { backgroundColor: "#f87171" }]} />
-            <View style={[styles.colorSegment, { backgroundColor: "#fb923c" }]} />
-            <View style={[styles.colorSegment, { backgroundColor: "#facc15" }]} />
-            <View style={[styles.colorSegment, { backgroundColor: "#4ade80" }]} />
-            <View style={[styles.colorSegment, { backgroundColor: "#60a5fa" }]} />
+            <View style={styles.generoRow}>
+              <TouchableOpacity
+                style={[
+                  styles.generoBtn,
+                  genero === "nino" && styles.active,
+                ]}
+                onPress={() => setGenero("nino")}
+              >
+                <Text style={styles.emoji}>🧒</Text>
+                <Text style={styles.generoText}>Niño</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.generoBtn,
+                  genero === "nina" && styles.activePink,
+                ]}
+                onPress={() => setGenero("nina")}
+              >
+                <Text style={styles.emoji}>👧</Text>
+                <Text style={styles.generoText}>Niña</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Botón */}
+            <TouchableOpacity style={styles.btn} onPress={handleRegister}>
+              <Text style={styles.btnText}>¡REGISTRARME!</Text>
+            </TouchableOpacity>
+
+            {/* 🔥 Login */}
+            <Text style={styles.loginText}>
+              ¿Ya tienes cuenta?{" "}
+              <Text
+                style={styles.loginLink}
+                onPress={() => router.replace("/login")}
+              >
+                Inicia sesión
+              </Text>
+            </Text>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f0f7ff",
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 30,
+    paddingVertical: 44,
+    paddingHorizontal: 30,
+    width: "100%",
+    maxWidth: 420,
+    alignSelf: "center",
+    minHeight: 620,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  headerBg: {
-    backgroundColor: "#5b8cdb",
-    paddingTop: 60,
-    paddingBottom: 30,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
-    alignItems: "center",
-  },
-  backBtn: {
-    position: "absolute",
-    top: 55,
-    left: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
+
+  title: {
+    fontSize: 26,
     fontWeight: "800",
-    color: "#fff",
-    marginBottom: 4,
+    textAlign: "center",
+    color: "#0f172a",
   },
-  headerSubtitle: {
-    fontSize: 15,
-    color: "rgba(255,255,255,0.85)",
+
+  subtitle: {
+    textAlign: "center",
+    color: "#64748b",
+    marginBottom: 20,
   },
-  form: {
-    backgroundColor: "#fff",
-    padding: 24,
-    flex: 1,
+
+  logoWrap: {
+    alignItems: "center",
+    marginBottom: 10,
   },
+
+  logoImage: {
+    width: 112,
+    height: 112,
+    borderRadius: 24,
+  },
+
   row: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 4,
+    gap: 10,
   },
-  halfField: {
+
+  half: {
     flex: 1,
   },
+
   label: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#475569",
+    color: "#1e293b",
+    marginTop: 10,
     marginBottom: 6,
-    marginTop: 8,
-    letterSpacing: 0.5,
   },
+
   input: {
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f1f5f9",
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+    padding: 12,
+    marginBottom: 10,
     color: "#0f172a",
-    fontSize: 14,
   },
+
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#f1f5f9",
     borderRadius: 20,
-    paddingHorizontal: 14,
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    marginBottom: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+    marginBottom: 12,
   },
+
   inputInner: {
     flex: 1,
     marginLeft: 8,
     color: "#0f172a",
-    fontSize: 14,
   },
+
+  centerLabel: {
+    textAlign: "center",
+    marginTop: 14,
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+
   generoRow: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 24,
-    marginTop: 12,
-    marginBottom: 8,
+    gap: 20,
+    marginVertical: 16,
   },
+
   generoBtn: {
-    alignItems: "center",
     padding: 16,
     borderRadius: 20,
     backgroundColor: "#f1f5f9",
-    minWidth: 90,
-    borderWidth: 2,
-    borderColor: "transparent",
+    alignItems: "center",
   },
-  generoBtnActive: {
+
+  active: {
     backgroundColor: "#dbeafe",
-    borderColor: "#3b82f6",
   },
-  generoBtnActiveNina: {
+
+  activePink: {
     backgroundColor: "#fce7f3",
-    borderColor: "#ec4899",
   },
-  generoEmoji: {
-    fontSize: 36,
-    marginBottom: 4,
+
+  emoji: {
+    fontSize: 30,
   },
-  generoLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#64748b",
-  },
-  generoLabelActive: {
+
+  generoText: {
     color: "#1e293b",
   },
-  registerBtn: {
+
+  btn: {
     backgroundColor: "#facc15",
     borderRadius: 20,
-    paddingVertical: 16,
+    padding: 18,
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 16,
-    shadowColor: "#facc15",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
+    marginTop: 10,
   },
-  registerBtnText: {
-    fontSize: 17,
+
+  btnText: {
     fontWeight: "800",
     color: "#1e293b",
-    letterSpacing: 1,
   },
+
   loginText: {
     textAlign: "center",
     color: "#64748b",
-    fontSize: 14,
-    marginBottom: 20,
+    marginTop: 16,
   },
+
   loginLink: {
-    color: "#3b82f6",
+    color: "#2563eb",
     fontWeight: "700",
-  },
-  colorBar: {
-    flexDirection: "row",
-    height: 4,
-    borderRadius: 2,
-    overflow: "hidden",
-    marginTop: 4,
-  },
-  colorSegment: {
-    flex: 1,
   },
 });

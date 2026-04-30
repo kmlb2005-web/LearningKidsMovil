@@ -11,7 +11,7 @@ import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
-export default function SplashScreen() {
+export default function Splash() {
   const router = useRouter();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -38,7 +38,7 @@ export default function SplashScreen() {
       duration: 2800,
       useNativeDriver: false,
     }).start(() => {
-      router.replace("/login");
+      router.replace("/register");
     });
   }, []);
 

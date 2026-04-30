@@ -1,5 +1,5 @@
-import LoginScreen from "../features/auth/screens/LoginScreen";
+import { Slot } from "expo-router";
 
-export default function Page() {
-  return <LoginScreen />;
+export default function TabsLayout() {
+  return <Slot />;
 }

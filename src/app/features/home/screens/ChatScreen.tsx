@@ -1,18 +1,20 @@
-import React, { useState, useRef } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useRef, useState } from "react";
 import {
-  View,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Mensaje = {
   id: string;
@@ -20,6 +22,13 @@ type Mensaje = {
   esLouz: boolean;
   pasos?: string[];
   resultado?: string;
+};
+
+type ChatSesion = {
+  id: string;
+  titulo: string;
+  mensajes: Mensaje[];
+  updatedAt: number;
 };
 
 const mensajesIniciales: Mensaje[] = [
@@ -36,12 +45,32 @@ const respuestasRapidas = [
   "¿Cómo simplifico?",
 ];
 
+const crearSesionInicial = (): ChatSesion => ({
+  id: Date.now().toString(),
+  titulo: "Nuevo chat",
+  mensajes: mensajesIniciales,
+  updatedAt: Date.now(),
+});
+
+const obtenerTituloChat = (mensajes: Mensaje[]) => {
+  const primerMensajeUsuario = mensajes.find((m) => !m.esLouz);
+  if (!primerMensajeUsuario) return "Nuevo chat";
+
+  const tituloBase = primerMensajeUsuario.texto.trim();
+  return tituloBase.length > 28 ? `${tituloBase.slice(0, 28)}...` : tituloBase;
+};
+
 export default function ChatScreen() {
-  const router = useRouter();
-  const [mensajes, setMensajes] = useState<Mensaje[]>(mensajesIniciales);
+  const insets = useSafeAreaInsets();
+  const [chats, setChats] = useState<ChatSesion[]>([crearSesionInicial()]);
+  const [chatActivoId, setChatActivoId] = useState(chats[0].id);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [texto, setTexto] = useState("");
   const [cargando, setCargando] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+
+  const chatActivo = chats.find((c) => c.id === chatActivoId) ?? chats[0];
+  const mensajes = chatActivo?.mensajes ?? mensajesIniciales;
 
   const generarRespuesta = (pregunta: string): Mensaje => {
     const p = pregunta.toLowerCase();
@@ -115,19 +144,43 @@ export default function ChatScreen() {
     const mensajeTexto = msg || texto.trim();
     if (!mensajeTexto) return;
 
+    const chatObjetivoId = chatActivoId;
+
     const nuevoMensaje: Mensaje = {
       id: Date.now().toString(),
       texto: mensajeTexto,
       esLouz: false,
     };
 
-    setMensajes((prev) => [...prev, nuevoMensaje]);
+    setChats((prev) =>
+      prev.map((chat) => {
+        if (chat.id !== chatObjetivoId) return chat;
+        const mensajesActualizados = [...chat.mensajes, nuevoMensaje];
+        return {
+          ...chat,
+          mensajes: mensajesActualizados,
+          titulo: obtenerTituloChat(mensajesActualizados),
+          updatedAt: Date.now(),
+        };
+      })
+    );
     setTexto("");
     setCargando(true);
 
     setTimeout(() => {
       const respuesta = generarRespuesta(mensajeTexto);
-      setMensajes((prev) => [...prev, respuesta]);
+      setChats((prev) =>
+        prev.map((chat) => {
+          if (chat.id !== chatObjetivoId) return chat;
+          const mensajesActualizados = [...chat.mensajes, respuesta];
+          return {
+            ...chat,
+            mensajes: mensajesActualizados,
+            titulo: obtenerTituloChat(mensajesActualizados),
+            updatedAt: Date.now(),
+          };
+        })
+      );
       setCargando(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }, 1000);
@@ -140,18 +193,51 @@ export default function ChatScreen() {
       "Ajustes del chat",
       "¿Qué deseas hacer?",
       [
-        { text: "Borrar historial", onPress: () => setMensajes(mensajesIniciales), style: "destructive" },
+        {
+          text: "Borrar chat actual",
+          style: "destructive",
+          onPress: () => {
+            setChats((prev) =>
+              prev.map((chat) =>
+                chat.id === chatActivoId
+                  ? {
+                      ...chat,
+                      mensajes: mensajesIniciales,
+                      titulo: "Nuevo chat",
+                      updatedAt: Date.now(),
+                    }
+                  : chat
+              )
+            );
+          },
+        },
         { text: "Cancelar", style: "cancel" },
       ]
     );
   };
 
+  const crearNuevoChat = () => {
+    const nuevo = crearSesionInicial();
+    setChats((prev) => [nuevo, ...prev]);
+    setChatActivoId(nuevo.id);
+    setTexto("");
+    setMenuVisible(false);
+  };
+
+  const seleccionarChat = (id: string) => {
+    setChatActivoId(id);
+    setTexto("");
+    setMenuVisible(false);
+  };
+
+  const chatsOrdenados = [...chats].sort((a, b) => b.updatedAt - a.updatedAt);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#1e293b" />
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Ionicons name="menu" size={22} color="#1e293b" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <View style={styles.avatarCircle}>
@@ -169,6 +255,53 @@ export default function ChatScreen() {
           <Ionicons name="settings-outline" size={22} color="#64748b" />
         </TouchableOpacity>
       </View>
+
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <View style={styles.drawerWrapper}>
+          <Pressable style={styles.drawerBackdrop} onPress={() => setMenuVisible(false)} />
+          <View style={[styles.drawerPanel, { paddingTop: insets.top + 18 }]}>
+            <Text style={styles.drawerTitle}>Historial de chats</Text>
+
+            <TouchableOpacity style={styles.newChatBtn} onPress={crearNuevoChat}>
+              <Ionicons name="add" size={18} color="#fff" />
+              <Text style={styles.newChatText}>Nuevo chat</Text>
+            </TouchableOpacity>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {chatsOrdenados.map((chat) => (
+                <TouchableOpacity
+                  key={chat.id}
+                  style={[
+                    styles.chatHistoryItem,
+                    chat.id === chatActivoId && styles.chatHistoryItemActive,
+                  ]}
+                  onPress={() => seleccionarChat(chat.id)}
+                >
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={18}
+                    color={chat.id === chatActivoId ? "#2563eb" : "#64748b"}
+                  />
+                  <Text
+                    style={[
+                      styles.chatHistoryText,
+                      chat.id === chatActivoId && styles.chatHistoryTextActive,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {chat.titulo}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
 
       {/* Mensajes */}
       <ScrollView
@@ -292,6 +425,70 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f0f7ff",
+  },
+  drawerWrapper: {
+    flex: 1,
+    flexDirection: "row",
+  },
+  drawerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.35)",
+  },
+  drawerPanel: {
+    width: "78%",
+    maxWidth: 340,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  drawerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0f172a",
+    marginBottom: 12,
+  },
+  newChatBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#3b82f6",
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginBottom: 14,
+  },
+  newChatText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  chatHistoryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginBottom: 6,
+    backgroundColor: "#f8fafc",
+  },
+  chatHistoryItemActive: {
+    backgroundColor: "#dbeafe",
+  },
+  chatHistoryText: {
+    flex: 1,
+    color: "#334155",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  chatHistoryTextActive: {
+    color: "#1d4ed8",
+    fontWeight: "700",
   },
   header: {
     flexDirection: "row",
