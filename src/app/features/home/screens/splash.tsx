@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -6,89 +6,126 @@ import {
   Animated,
   StyleSheet,
   Dimensions,
+  Easing,
 } from "react-native";
 import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
-export default function Splash() {
+export default function SplashScreen() {
   const router = useRouter();
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+
+  const fade = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.8)).current;
+  const progress = useRef(new Animated.Value(0)).current;
+  const robotY = useRef(new Animated.Value(0)).current;
+
+  const [msg, setMsg] = useState("Preparando tu aventura...");
 
   useEffect(() => {
-    // Fade in y scale del logo
+    // Entrada
     Animated.parallel([
-      Animated.timing(fadeAnim, {
+      Animated.timing(fade, {
         toValue: 1,
-        duration: 600,
+        duration: 700,
         useNativeDriver: true,
       }),
-      Animated.spring(scaleAnim, {
+      Animated.spring(scale, {
         toValue: 1,
         friction: 4,
         useNativeDriver: true,
       }),
     ]).start();
 
-    // Barra de progreso animada
-    Animated.timing(progressAnim, {
+    // 🤖 Animación del robot (idle)
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(robotY, {
+          toValue: -8,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(robotY, {
+          toValue: 0,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // ⏱️ Cambios de texto
+    setTimeout(() => setMsg("Cargando contenido..."), 2000);
+    setTimeout(() => setMsg("Casi listo... 🚀"), 4500);
+
+    // 📊 Barra (7 segundos)
+    Animated.timing(progress, {
       toValue: 1,
-      duration: 2800,
+      duration: 7000,
+      easing: Easing.out(Easing.ease),
       useNativeDriver: false,
     }).start(() => {
-      router.replace("/register");
+      router.replace("/login");
     });
   }, []);
 
-  const progressWidth = progressAnim.interpolate({
+  const widthAnim = progress.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
 
   return (
     <View style={styles.container}>
-      {/* Fondo con degradado suave simulado */}
-      <View style={styles.bgTop} />
-      <View style={styles.bgBottom} />
+      {/* Fondo */}
+      <Image source={require("../../../../../assets/images/Splash/fondo.png")} style={styles.bg} />
 
       <Animated.View
         style={[
           styles.content,
-          { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
+          { opacity: fade, transform: [{ scale }] },
         ]}
       >
-        {/* Logo texto */}
-        <Text style={styles.logoText}>LEARNING KIDS</Text>
+        {/* Título */}
+        <Image
+          source={require("../../../../../assets/images/Splash/titulo.png")}
+          style={styles.title}
+          resizeMode="contain"
+        />
 
-        {/* Robot / logo imagen */}
-        <View style={styles.robotContainer}>
+        {/* Círculo + Robot */}
+        <View style={styles.circleContainer}>
           <Image
-            source={require("../../../../../assets/images/logos/logoCuadrado.png")}
-            style={styles.robotImage}
-            resizeMode="contain"
+            source={require("../../../../../assets/images/Splash/circulo.png")}
+            style={styles.circle}
           />
-        </View>
 
-        {/* Texto de carga */}
-        <Text style={styles.loadingText}>Preparando tu aventura...</Text>
-
-        {/* Barra de progreso */}
-        <View style={styles.progressBar}>
-          <Animated.View
+          <Animated.Image
+            source={require("../../../../../assets/images/Splash/louz.png")}
             style={[
-              styles.progressFill,
-              { width: progressWidth },
+              styles.robot,
+              { transform: [{ translateY: robotY }] },
             ]}
           />
         </View>
 
-        <Text style={styles.almostText}>Ya casi... ✨</Text>
+        {/* Texto dinámico */}
+        <Text style={styles.text}>{msg}</Text>
+
+        {/* Barra */}
+        <View style={styles.bar}>
+          <Animated.View style={[styles.fill, { width: widthAnim }]} />
+        </View>
+
+        <Text style={styles.subText}>¡Ya casi! ✨</Text>
       </Animated.View>
 
-      {/* Texto inferior */}
-      <Text style={styles.bottomText}>LEARNING KIDS</Text>
+      {/* Nubes */}
+      <Image
+        source={require("../../../../../assets/images/Splash/nubes.png")}
+        style={styles.clouds}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -97,92 +134,77 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#e8f4f8",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
   },
-  bgTop: {
+
+  bg: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    backgroundColor: "#d4eef8",
-    borderBottomLeftRadius: 80,
-    borderBottomRightRadius: 80,
+    width: "100%",
+    height: "100%",
   },
-  bgBottom: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "30%",
-    backgroundColor: "#f0f7e6",
-  },
+
   content: {
     alignItems: "center",
-    paddingHorizontal: 40,
     width: "100%",
+    paddingHorizontal: 20,
   },
-  logoText: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#4a90d9",
-    letterSpacing: 3,
-    marginBottom: 30,
-    textShadowColor: "rgba(74, 144, 217, 0.3)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+
+  title: {
+    width: 400,
+    height: 220,
+    marginBottom: 20,
   },
-  robotContainer: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: "rgba(255,255,255,0.7)",
-    alignItems: "center",
+
+  circleContainer: {
     justifyContent: "center",
-    marginBottom: 30,
-    shadowColor: "#4a90d9",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 10,
+    alignItems: "center",
+    marginVertical: 30,
   },
-  robotImage: {
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+
+  circle: {
+    width: 280,
+    height: 280,
+    position: "absolute",
   },
-  loadingText: {
+
+  robot: {
+    width: 220,
+    height: 220,
+  },
+
+  text: {
     fontSize: 18,
-    color: "#5a7a8a",
-    fontWeight: "500",
+    color: "#2d6cdf",
+    fontWeight: "600",
+    marginTop: 10,
     marginBottom: 20,
     textAlign: "center",
   },
-  progressBar: {
-    width: width * 0.6,
-    height: 8,
-    backgroundColor: "rgba(255,255,255,0.5)",
-    borderRadius: 4,
+
+  bar: {
+    width: width * 0.7,
+    height: 12,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    borderRadius: 10,
     overflow: "hidden",
-    marginBottom: 12,
   },
-  progressFill: {
+
+  fill: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: 10,
     backgroundColor: "#4a90d9",
-    // Simulación del degradado azul → amarillo con color sólido
   },
-  almostText: {
-    fontSize: 13,
-    color: "#7a9ab0",
+
+  subText: {
+    marginTop: 10,
+    color: "#6c8aa0",
   },
-  bottomText: {
+
+  clouds: {
     position: "absolute",
-    bottom: 30,
-    fontSize: 11,
-    color: "#aabcc8",
-    letterSpacing: 2,
-    fontWeight: "600",
+    bottom: 0,
+    width: "100%",
+    height: 130,
   },
 });
