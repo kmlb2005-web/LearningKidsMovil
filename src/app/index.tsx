@@ -1,5 +1,5 @@
-import Splash from "./features/home/screens/Splash";
+import HomeScreen  from "./features/home/screens/HomeScreen";
 
 export default function Index() {
-  return <Splash />;
+  return <HomeScreen/>;
 }
