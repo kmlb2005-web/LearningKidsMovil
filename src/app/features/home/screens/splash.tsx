@@ -1,14 +1,14 @@
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  Image,
   Animated,
-  StyleSheet,
   Dimensions,
   Easing,
+  Image,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -62,7 +62,7 @@ export default function SplashScreen() {
     // 📊 Barra (7 segundos)
     Animated.timing(progress, {
       toValue: 1,
-      duration: 7000,
+      duration: 20000,
       easing: Easing.out(Easing.ease),
       useNativeDriver: false,
     }).start(() => {
@@ -151,15 +151,16 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    width: 400,
-    height: 220,
-    marginBottom: 20,
+    width: 460,
+    height: 250,
+    marginBottom: -8,
   },
 
   circleContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 30,
+    marginVertical: 20,
+    marginTop: -24,
   },
 
   circle: {
