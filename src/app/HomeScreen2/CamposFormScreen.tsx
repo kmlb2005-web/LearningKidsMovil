@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   View,
+  Text,
+  ScrollView,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
 
 // --- TIPOS ---
@@ -25,18 +25,18 @@ interface Materia {
 const materias: Materia[] = [
   {
     id: '1',
-    nombre: 'Pensamiento\nCientífico',
+    nombre: 'Saberes y Pensamiento\nCientífico',
     porcentaje: 60,
-    imagen: require('../../../assets/imagenes_F/1.MICROSC.png'),
+    imagen: require('../../../assets/images/CamposFormativos/Saberes y Pensamiento Científico.png'),
     color: '#2563EB',
     barraColor: '#2563EB',
     bgColor: '#EFF6FF',
   },
   {
     id: '2',
-    nombre: 'Matemáticas',
+    nombre: 'Ética, Naturaleza\ny Sociedades',
     porcentaje: 45,
-    imagen: require('../../../assets/imagenes_F/1.calculadora.png'),
+    imagen: require('../../../assets/images/CamposFormativos/Ética, Naturaleza y Sociedades.png'),
     color: '#7C3AED',
     barraColor: '#7C3AED',
     bgColor: '#F5F3FF',
@@ -45,16 +45,16 @@ const materias: Materia[] = [
     id: '3',
     nombre: 'Lenguajes',
     porcentaje: 30,
-    imagen: require('../../../assets/imagenes_F/1.libro.png'),
+    imagen: require('../../../assets/images/CamposFormativos/Lenguajes.png'),
     color: '#D97706',
     barraColor: '#F59E0B',
     bgColor: '#FFFBEB',
   },
   {
     id: '4',
-    nombre: 'Formación\nCívica',
+    nombre: 'De lo Humano y\nlo Comunitario',
     porcentaje: 20,
-    imagen: require('../../../assets/imagenes_F/1.mundo.png'),
+    imagen: require('../../../assets/images/CamposFormativos/De lo Humano y lo Comunitario.png'),
     color: '#16A34A',
     barraColor: '#22C55E',
     bgColor: '#F0FDF4',
@@ -64,90 +64,50 @@ const materias: Materia[] = [
 const instrucciones = [
   {
     id: '1',
-    icono: require('../../../assets/imagenes_F/1.lista.png'),
+    icono: require('../../../assets/images/CamposFormativos/icono1.png'),
     iconoBg: '#DBEAFE',
-    texto:
-      'Elige uno de los 4 campos formativos para empezar tu aventura de aprendizaje.',
+    texto: 'Elige uno de los 4 campos formativos para empezar tu aventura de aprendizaje.',
   },
   {
     id: '2',
-    icono: require('../../../assets/imagenes_F/1.carpeta.png'),
+    icono: require('../../../assets/images/CamposFormativos/icono2.png'),
     iconoBg: '#EDE9FE',
-    texto:
-      'Cada campo tiene varios proyectos. Completa para avanzar y desbloquear más.',
+    texto: 'Cada campo tiene varios proyectos. Completa para avanzar y desbloquear más.',
   },
   {
     id: '3',
-    icono: require('../../../assets/imagenes_F/1.lista.png'),
+    icono: require('../../../assets/images/CamposFormativos/icono3.png'),
     iconoBg: '#FEF3C7',
-    texto:
-      'Cada proyecto tiene temas organizados paso a paso. Avanza y desbloquea.',
+    texto: 'Cada proyecto tiene temas organizados paso a paso. Avanza y desbloquea.',
   },
   {
     id: '4',
-    icono: require('../../../assets/imagenes_F/1.paloma.png'),
+    icono: require('../../../assets/images/CamposFormativos/icono4.png'),
     iconoBg: '#DCFCE7',
-    texto:
-      'Cada tema tiene pruebas para practicar y un examen final para evaluar.',
+    texto: 'Cada tema tiene pruebas para practicar y un examen final para evaluar.',
   },
 ];
 
 // --- BARRA DE PROGRESO ---
-const BarraProgreso = ({
-  porcentaje,
-  color,
-}: {
-  porcentaje: number;
-  color: string;
-}) => (
+const BarraProgreso = ({ porcentaje, color }: { porcentaje: number; color: string }) => (
   <View style={styles.barraContainer}>
     <View style={styles.barraFondo}>
-      <View
-        style={[
-          styles.barraRelleno,
-          {
-            width: `${porcentaje}%`,
-            backgroundColor: color,
-          },
-        ]}
-      />
+      <View style={[styles.barraRelleno, { width: `${porcentaje}%`, backgroundColor: color }]} />
     </View>
-
-    <Text style={[styles.barraTexto, { color }]}>
-      {porcentaje}%
-    </Text>
+    <Text style={[styles.barraTexto, { color }]}>{porcentaje}%</Text>
   </View>
 );
 
 // --- TARJETA MATERIA ---
 const TarjetaMateria = ({ materia }: { materia: Materia }) => (
   <TouchableOpacity
-    style={[
-      styles.tarjeta,
-      { backgroundColor: materia.bgColor },
-    ]}
+    style={[styles.tarjeta, { backgroundColor: materia.bgColor }]}
     activeOpacity={0.85}
   >
-    <Image
-      source={materia.imagen}
-      style={styles.tarjetaImagen}
-      resizeMode="contain"
-    />
-
-    <Text
-      style={[
-        styles.tarjetaNombre,
-        { color: materia.color },
-      ]}
-    >
-      {materia.nombre}
-    </Text>
-
+    <Image source={materia.imagen} style={styles.tarjetaImagen} resizeMode="contain" />
+    <Text style={[styles.tarjetaNombre, { color: materia.color }]}>{materia.nombre}</Text>
     {materia.porcentaje !== null && (
-      <BarraProgreso
-        porcentaje={materia.porcentaje}
-        color={materia.barraColor}
-      />
+      <BarraProgreso porcentaje={materia.porcentaje} color={materia.barraColor} />
     )}
   </TouchableOpacity>
 );
@@ -156,11 +116,7 @@ const TarjetaMateria = ({ materia }: { materia: Materia }) => (
 export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar
-        barStyle="dark-content"
-        backgroundColor="#DBEAFE"
-      />
-
+      <StatusBar barStyle="dark-content" backgroundColor="#DBEAFE" />
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -169,57 +125,31 @@ export default function HomeScreen() {
         {/* HEADER */}
         <View style={styles.header}>
           <Image
-            source={require('../../../assets/imagenes_F/1.fondok.png')}
+            source={require('../../../assets/images/CamposFormativos/louzSaludando.png')}
             style={styles.robotImagen}
             resizeMode="contain"
           />
-
           <View style={styles.headerTextos}>
-            <Text style={styles.saludo}>
-              ¡Hola, Louz! 👋
-            </Text>
-
-            <Text style={styles.subtitulo}>
-              ¿Qué quieres aprender hoy?
-            </Text>
+            <Text style={styles.saludo}>¡Hola, Louz! 👋</Text>
+            <Text style={styles.subtitulo}>¿Qué quieres aprender hoy?</Text>
           </View>
         </View>
 
         {/* GRID DE MATERIAS */}
         <View style={styles.grid}>
           {materias.map((materia) => (
-            <TarjetaMateria
-              key={materia.id}
-              materia={materia}
-            />
+            <TarjetaMateria key={materia.id} materia={materia} />
           ))}
         </View>
 
         {/* INSTRUCCIONES */}
         <View style={styles.instruccionesCard}>
           {instrucciones.map((inst) => (
-            <View
-              key={inst.id}
-              style={styles.instruccionFila}
-            >
-              <View
-                style={[
-                  styles.instruccionIconoBg,
-                  {
-                    backgroundColor: inst.iconoBg,
-                  },
-                ]}
-              >
-                <Image
-                  source={inst.icono}
-                  style={styles.instruccionIcono}
-                  resizeMode="contain"
-                />
+            <View key={inst.id} style={styles.instruccionFila}>
+              <View style={[styles.instruccionIconoBg, { backgroundColor: inst.iconoBg }]}>
+                <Image source={inst.icono} style={styles.instruccionIcono} resizeMode="contain" />
               </View>
-
-              <Text style={styles.instruccionTexto}>
-                {inst.texto}
-              </Text>
+              <Text style={styles.instruccionTexto}>{inst.texto}</Text>
             </View>
           ))}
         </View>
@@ -230,61 +160,28 @@ export default function HomeScreen() {
         <TouchableOpacity style={styles.navItem}>
           <Image
             source={require('../../../assets/imagenes_F/1.inicio.png')}
-            style={[
-              styles.navIcono,
-              { tintColor: '#2563EB' },
-            ]}
+            style={[styles.navIcono, { tintColor: '#2563EB' }]}
             resizeMode="contain"
           />
-
-          <Text
-            style={[
-              styles.navTexto,
-              { color: '#2563EB' },
-            ]}
-          >
-            Inicio
-          </Text>
+          <Text style={[styles.navTexto, { color: '#2563EB' }]}>Inicio</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem}>
           <Image
             source={require('../../../assets/imagenes_F/1.avances.png')}
-            style={[
-              styles.navIcono,
-              { tintColor: '#9CA3AF' },
-            ]}
+            style={[styles.navIcono, { tintColor: '#9CA3AF' }]}
             resizeMode="contain"
           />
-
-          <Text
-            style={[
-              styles.navTexto,
-              { color: '#9CA3AF' },
-            ]}
-          >
-            Mis avances
-          </Text>
+          <Text style={[styles.navTexto, { color: '#9CA3AF' }]}>Mis avances</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.navItem}>
           <Image
             source={require('../../../assets/imagenes_F/1.PERFIL.png')}
-            style={[
-              styles.navIcono,
-              { tintColor: '#9CA3AF' },
-            ]}
+            style={[styles.navIcono, { tintColor: '#9CA3AF' }]}
             resizeMode="contain"
           />
-
-          <Text
-            style={[
-              styles.navTexto,
-              { color: '#9CA3AF' },
-            ]}
-          >
-            Perfil
-          </Text>
+          <Text style={[styles.navTexto, { color: '#9CA3AF' }]}>Perfil</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -297,11 +194,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F0F6FF',
   },
-
   scroll: {
     flex: 1,
   },
-
   scrollContent: {
     paddingBottom: 20,
   },
@@ -318,24 +213,20 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 28,
     marginBottom: 20,
   },
-
   robotImagen: {
     width: 110,
     height: 110,
     marginRight: 14,
   },
-
   headerTextos: {
     flex: 1,
   },
-
   saludo: {
     fontSize: 22,
     fontWeight: '800',
     color: '#1E3A5F',
     marginBottom: 6,
   },
-
   subtitulo: {
     fontSize: 15,
     color: '#4B7AB8',
@@ -350,30 +241,22 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 20,
   },
-
   tarjeta: {
     width: '47%',
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',
-
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
     shadowRadius: 8,
     elevation: 3,
   },
-
   tarjetaImagen: {
     width: 84,
     height: 84,
     marginBottom: 10,
   },
-
   tarjetaNombre: {
     fontSize: 14,
     fontWeight: '700',
@@ -389,7 +272,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-
   barraFondo: {
     flex: 1,
     height: 6,
@@ -397,12 +279,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
-
   barraRelleno: {
     height: '100%',
     borderRadius: 10,
   },
-
   barraTexto: {
     fontSize: 12,
     fontWeight: '700',
@@ -416,24 +296,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     gap: 14,
-
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
   },
-
   instruccionFila: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-
   instruccionIconoBg: {
     width: 46,
     height: 46,
@@ -442,12 +315,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-
   instruccionIcono: {
     width: 26,
     height: 26,
   },
-
   instruccionTexto: {
     flex: 1,
     fontSize: 13,
@@ -465,17 +336,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     justifyContent: 'space-around',
   },
-
   navItem: {
     alignItems: 'center',
     gap: 4,
   },
-
   navIcono: {
     width: 24,
     height: 24,
   },
-
   navTexto: {
     fontSize: 11,
     fontWeight: '600',
