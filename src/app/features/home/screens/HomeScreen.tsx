@@ -1,16 +1,16 @@
-import React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   Image,
-  TouchableOpacity,
   ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -36,7 +36,7 @@ const HomeScreen = () => {
 
           <Image
             source={require("../../../../../assets/images/HomeScreen/Nube.png")}
-            style={[styles.cloud, { top: 60, left: 145, width: 45 }]}
+            style={[styles.cloud, { top: 30, left: 145, width: 45 }]}
           />
 
           <Image
@@ -199,9 +199,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#EAF6FF",
     borderBottomLeftRadius: 42,
     borderBottomRightRadius: 42,
-    height: 265,
+    height: 212,
     paddingHorizontal: 24,
-    paddingTop: 65,
+    paddingTop: 18,
     position: "relative",
     overflow: "hidden",
   },
@@ -220,11 +220,11 @@ const styles = StyleSheet.create({
     color: "#081B54",
     lineHeight: 37,
     width: "55%",
-    marginTop: 10,
+    marginTop: 30,
   },
 
   subtitle: {
-    marginTop: 10,
+    marginTop: 3,
     fontSize: 17,
     color: "#64748B",
   },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     height: 200,
     position: "absolute",
     right: 8,
-    top: 55,
+    top: 20,
     resizeMode: "contain",
   },
 

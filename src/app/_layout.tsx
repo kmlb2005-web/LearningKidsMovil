@@ -25,7 +25,7 @@ export default function RootLayout() {
         style={[
           styles.content,
           showFooter && styles.contentWithFooter,
-          showFooter && { paddingBottom: 84 + insets.bottom },
+          showFooter && { paddingBottom: 96 + insets.bottom },
         ]}
       >
         <Slot />
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
 
   contentWithFooter: {
-    paddingBottom: 84,
+    paddingBottom: 96,
   },
 
   navbar: {

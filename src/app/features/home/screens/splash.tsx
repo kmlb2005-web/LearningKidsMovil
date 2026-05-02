@@ -62,7 +62,7 @@ export default function SplashScreen() {
     // 📊 Barra (7 segundos)
     Animated.timing(progress, {
       toValue: 1,
-      duration: 20000,
+      duration: 7000,
       easing: Easing.out(Easing.ease),
       useNativeDriver: false,
     }).start(() => {
