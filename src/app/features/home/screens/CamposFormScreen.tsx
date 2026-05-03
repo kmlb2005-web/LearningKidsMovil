@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Image,
   SafeAreaView,
   StyleSheet,
@@ -27,6 +28,7 @@ type ApiField = {
 
 export default function CamposFormScreen() {
   const router = useRouter();
+  const cardPressAnimations = React.useRef<Record<string, Animated.Value>>({}).current;
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -96,11 +98,77 @@ export default function CamposFormScreen() {
     fetchFields();
   }, []);
 
-  const handlePress = (id: string) => {
+  const handlePress = (id: string, title: string) => {
     router.push({
       pathname: "/(tabs)/proyectos",
-      params: { idCampo: id },
+      params: { idCampo: id, campoNombre: title },
     });
+  };
+
+  const getCardPressAnimation = (key: string) => {
+    if (!cardPressAnimations[key]) {
+      cardPressAnimations[key] = new Animated.Value(0);
+    }
+    return cardPressAnimations[key];
+  };
+
+  const getCardPressStyle = (key: string) => ({
+    transform: [
+      {
+        translateY: getCardPressAnimation(key).interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -10],
+        }),
+      },
+      {
+        scale: getCardPressAnimation(key).interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.08],
+        }),
+      },
+      {
+        rotate: getCardPressAnimation(key).interpolate({
+          inputRange: [0, 1],
+          outputRange: ["0deg", "-2deg"],
+        }),
+      },
+    ],
+  });
+
+  const handleCardPressIn = (key: string) => {
+    Animated.timing(getCardPressAnimation(key), {
+      toValue: 1,
+      duration: 120,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleCardPressOut = (key: string) => {
+    Animated.spring(getCardPressAnimation(key), {
+      toValue: 0,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 8,
+    }).start();
+  };
+
+  const handleCardPress = (id: string, title: string) => {
+    const key = `campo-${id}`;
+    const animation = getCardPressAnimation(key);
+
+    Animated.sequence([
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.spring(animation, {
+        toValue: 0,
+        useNativeDriver: true,
+        speed: 16,
+        bounciness: 11,
+      }),
+    ]).start(() => handlePress(id, title));
   };
 
   if (loading) {
@@ -127,7 +195,7 @@ export default function CamposFormScreen() {
           />
 
           <View>
-            <Text style={styles.title}>¡Hola, Louz! 👋</Text>
+            <Text style={styles.title}>¡Hola, soy Louz! 👋</Text>
             <Text style={styles.subtitle}>
               ¿Qué quieres aprender hoy?
             </Text>
@@ -138,19 +206,32 @@ export default function CamposFormScreen() {
       {/* GRID */}
       <View style={styles.grid}>
         {fields.map((item) => (
-          <TouchableOpacity
+          <Animated.View
             key={item.id}
-            style={[styles.card, { backgroundColor: item.color + "30" }]}
-            onPress={() => handlePress(item.id)}
+            style={[styles.cardAnimatedWrap, getCardPressStyle(`campo-${item.id}`)]}
           >
-            {item.image && (
-              <Image source={item.image} style={styles.cardImage} />
-            )}
-            <View style={styles.cardOverlay}>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-            </View>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.card, { backgroundColor: item.color + "30" }]}
+              activeOpacity={1}
+              onPressIn={() => handleCardPressIn(`campo-${item.id}`)}
+              onPressOut={() => handleCardPressOut(`campo-${item.id}`)}
+              onPress={() => handleCardPress(item.id, item.title)}
+            >
+              {item.image && (
+                <Image source={item.image} style={styles.cardImage} />
+              )}
+              <View style={styles.cardOverlay}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
         ))}
+
+        {fields.length === 0 && (
+          <Text style={styles.emptyStateText}>
+            No se encontraron campos formativos. Verifica que el backend este activo.
+          </Text>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -192,17 +273,17 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
     color: "#1e293b",
-    marginLeft: -20,
+    marginLeft: -50,
   },
 
   subtitle: {
     color: "#64748b",
     marginTop: 4,
     fontSize: 16,
-    marginLeft: -20,
+    marginLeft: -50,
   },
 
   grid: {
@@ -214,10 +295,14 @@ const styles = StyleSheet.create({
   },
 
   /* 🔥 CARD */
-  card: {
+  cardAnimatedWrap: {
     width: "48%",
-    borderRadius: 22,
     marginBottom: 16,
+  },
+
+  card: {
+    width: "100%",
+    borderRadius: 22,
     overflow: "hidden",
     height: 220,
     justifyContent: "center",
@@ -252,5 +337,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 13,
     color: "#ffffff",
+  },
+
+  emptyStateText: {
+    width: "100%",
+    textAlign: "center",
+    marginTop: 12,
+    color: "#475569",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

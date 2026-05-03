@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React from "react";
 import {
+  Animated,
   Image,
   ScrollView,
   StatusBar,
@@ -13,6 +14,72 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const HomeScreen = () => {
   const router = useRouter();
+  const pressAnimations = React.useRef<Record<string, Animated.Value>>({}).current;
+
+  const getPressAnimation = (key: string) => {
+    if (!pressAnimations[key]) {
+      pressAnimations[key] = new Animated.Value(0);
+    }
+    return pressAnimations[key];
+  };
+
+  const getPressStyle = (key: string) => ({
+    transform: [
+      {
+        translateY: getPressAnimation(key).interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -10],
+        }),
+      },
+      {
+        scale: getPressAnimation(key).interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.08],
+        }),
+      },
+      {
+        rotate: getPressAnimation(key).interpolate({
+          inputRange: [0, 1],
+          outputRange: ["0deg", "-2deg"],
+        }),
+      },
+    ],
+  });
+
+  const animatePressIn = (key: string) => {
+    Animated.timing(getPressAnimation(key), {
+      toValue: 1,
+      duration: 120,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const animatePressOut = (key: string) => {
+    Animated.spring(getPressAnimation(key), {
+      toValue: 0,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 8,
+    }).start();
+  };
+
+  const animatePress = (key: string, onComplete: () => void) => {
+    const animation = getPressAnimation(key);
+
+    Animated.sequence([
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.spring(animation, {
+        toValue: 0,
+        useNativeDriver: true,
+        speed: 16,
+        bounciness: 11,
+      }),
+    ]).start(onComplete);
+  };
 
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
@@ -85,12 +152,17 @@ const HomeScreen = () => {
               divertirte.
             </Text>
 
-            <TouchableOpacity
-              style={styles.blueButton}
-              onPress={() => router.push("/(tabs)/chatScreen")}
-            >
-              <Text style={styles.buttonText}>Ir al chat →</Text>
-            </TouchableOpacity>
+            <Animated.View style={[{ alignSelf: "flex-start" }, getPressStyle("home-chat-button")]}>
+              <TouchableOpacity
+                style={styles.blueButton}
+                activeOpacity={1}
+                onPressIn={() => animatePressIn("home-chat-button")}
+                onPressOut={() => animatePressOut("home-chat-button")}
+                onPress={() => animatePress("home-chat-button", () => router.push("/(tabs)/chatScreen"))}
+              >
+                <Text style={styles.buttonText}>Ir al chat →</Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </View>
 
@@ -119,12 +191,17 @@ const HomeScreen = () => {
               cuestionarios.
             </Text>
 
-            <TouchableOpacity
-              style={styles.orangeButton}
-              onPress={() => router.push("/(tabs)/campos")}
-            >
-              <Text style={styles.buttonText}>Comenzar →</Text>
-            </TouchableOpacity>
+            <Animated.View style={[{ alignSelf: "flex-start" }, getPressStyle("home-pruebas-button")]}>
+              <TouchableOpacity
+                style={styles.orangeButton}
+                activeOpacity={1}
+                onPressIn={() => animatePressIn("home-pruebas-button")}
+                onPressOut={() => animatePressOut("home-pruebas-button")}
+                onPress={() => animatePress("home-pruebas-button", () => router.push("/(tabs)/campos"))}
+              >
+                <Text style={styles.buttonText}>Comenzar →</Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </View>
 

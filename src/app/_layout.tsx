@@ -8,6 +8,9 @@ export default function RootLayout() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  const footerHeight = 78;
+  const footerBottom = Math.max(insets.bottom, 10);
+
   console.log("PATHNAME:", pathname); // debug (puedes quitarlo luego)
 
   /* 🔥 TABS ACTIVOS */
@@ -28,7 +31,7 @@ export default function RootLayout() {
       <View
         style={[
           styles.content,
-          showFooter && { paddingBottom: 90 },
+          showFooter && { paddingBottom: footerHeight + footerBottom },
         ]}
       >
         <Slot />
@@ -39,7 +42,9 @@ export default function RootLayout() {
           style={[
             styles.navbar,
             {
-              paddingBottom: Math.max(insets.bottom, 10),
+              bottom: footerBottom,
+              height: footerHeight,
+              paddingBottom: 10,
             },
           ]}
         >
@@ -110,7 +115,7 @@ const styles = StyleSheet.create({
     left: 18,
     right: 18,
     bottom: 10,
-    height: 78,
+    height: 88,
     backgroundColor: "#fff",
     borderRadius: 34,
     flexDirection: "row",

@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import { getAuthenticatedUser } from "../../../../shared/utils/authSession";
 
@@ -35,6 +35,7 @@ type Question = {
 
 export default function FormPruebas() {
   const { idPrueba } = useLocalSearchParams();
+  const router = useRouter();
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +100,7 @@ export default function FormPruebas() {
   const currentQuestion = questions[current];
 
   /* ========= LOGICA ========= */
-  const handleNext = () => {
+  const handleNext = async () => {
     if (selected === null) return;
 
     const newAnswers = [...answers, selected];
@@ -112,7 +113,7 @@ export default function FormPruebas() {
       const correct = newAnswers.filter(
         (ans, i) => ans === questions[i].correct
       ).length;
-      saveResult(correct);
+      await saveResult(correct);
       setFinished(true);
     }
   };
@@ -145,15 +146,26 @@ export default function FormPruebas() {
     const body = JSON.stringify({ idAlumno, idPrueba: idPruebaNum, calificacion, fecha });
 
     try {
-      /* 1. Buscar si ya existe resultado para este alumno + prueba */
-      const getRes = await fetch(`${BASE}?idAlumno=${idAlumno}&idPrueba=${idPruebaNum}`);
+      /* 1. Buscar resultados de este alumno + prueba */
+      const getRes = await fetch(`${BASE}/alumno/${idAlumno}/prueba/${idPruebaNum}`);
       const existing = await getRes.json().catch(() => null);
 
       const record = Array.isArray(existing)
-        ? existing.find(
-            (r: { idAlumno: number; idPrueba: number; idResultado: number }) =>
-              r.idAlumno === idAlumno && r.idPrueba === idPruebaNum
-          )
+        ? [...existing]
+            .filter(
+              (r: { idAlumno?: number; idPrueba?: number; idResultado?: number }) =>
+                r.idAlumno === idAlumno && r.idPrueba === idPruebaNum
+            )
+            .sort((a, b) => {
+              const aTime = a?.fecha ? new Date(a.fecha).getTime() : 0;
+              const bTime = b?.fecha ? new Date(b.fecha).getTime() : 0;
+
+              if (aTime !== bTime) {
+                return bTime - aTime;
+              }
+
+              return (b?.idResultado ?? 0) - (a?.idResultado ?? 0);
+            })[0] ?? null
         : existing?.idResultado
         ? existing
         : null;
@@ -260,6 +272,10 @@ export default function FormPruebas() {
   /* ========= UI ========= */
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
+      {/* BACK BUTTON */}
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <Text style={styles.backBtnText}>‹</Text>
+      </TouchableOpacity>
       <View style={styles.content}>
         <Text style={styles.progress}>
           {current + 1} / {questions.length}
@@ -307,7 +323,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#eef2f3",
+  },
+
+  backBtn: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#e2e8f0",
+    alignItems: "center",
     justifyContent: "center",
+  },
+  backBtnText: {
+    fontSize: 24,
+    color: "#374151",
+    lineHeight: 28,
   },
 
   content: {
