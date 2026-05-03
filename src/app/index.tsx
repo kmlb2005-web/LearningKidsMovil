@@ -1,6 +1,8 @@
+
+
 import React from 'react';
-import HomeScreen from "./HomeScreen2/CamposFormScreen";
+import ProyectosScreen from './(tabs)/proyectos';
 
 export default function Index() {
-  return <HomeScreen />;
+  return <ProyectosScreen />;
 }

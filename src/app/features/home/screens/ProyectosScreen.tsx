@@ -1,6 +1,4 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -8,217 +6,202 @@ import {
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from 'react-native';
 
-type Proyecto = {
-  idProyecto: number;
-  nombre: string;
+// --- DATOS ESTÁTICOS ---
+const proyectos = [
+  {
+    id: '1',
+    titulo: 'El cuerpo humano',
+    descripcion: 'Descubre cómo funciona tu cuerpo y la importancia del autocuidado.',
+  },
+  {
+    id: '2',
+    titulo: 'Biodiversidad y medio ambiente',
+    descripcion: 'Explora la riqueza natural y aprende a proteger nuestro planeta.',
+  },
+  {
+    id: '3',
+    titulo: 'Propiedades de los materiales',
+    descripcion: 'Investiga de qué están hechas las cosas y sus transformaciones.',
+  },
+  {
+    id: '4',
+    titulo: 'El Sistema Solar y el Universo',
+    descripcion: 'Viaja por las estrellas y descubre los secretos del cosmos.',
+  },
+  {
+    id: '5',
+    titulo: 'Fuerzas y movimiento',
+    descripcion: 'Comprende cómo los objetos se mueven y qué los hace cambiar.',
+  },
+];
+
+// --- COMPONENTE TARJETA ---
+const TarjetaProyecto = ({
+  titulo,
+  descripcion,
+}: {
+  titulo: string;
   descripcion: string;
-  idCampo: number;
-};
+}) => (
+  <TouchableOpacity style={styles.tarjeta} activeOpacity={0.8}>
 
-const campoConfig: any = {
-  1: { emoji: "🔬", color: "#dbeafe", labelColor: "#3b82f6", title: "Científico" },
-  4: { emoji: "📚", color: "#fef3c7", labelColor: "#f59e0b", title: "Lenguajes" },
-  5: { emoji: "🌱", color: "#dcfce7", labelColor: "#22c55e", title: "Ética y Sociedad" },
-  6: { emoji: "👥", color: "#ede9fe", labelColor: "#8b5cf6", title: "Comunitario" },
-};
+    {/* Espacio reservado para imagen - reemplaza este View por un <Image> cuando tengas las imágenes */}
+    <View style={styles.imagenPlaceholder}>
+      {/* Aquí va la imagen */}
+    </View>
 
+    {/* Contenido textual */}
+    <View style={styles.contenido}>
+      <Text style={styles.titulo}>{titulo}</Text>
+      <Text style={styles.descripcion}>{descripcion}</Text>
+    </View>
+
+    {/* Indicador de navegación */}
+    <Text style={styles.flecha}>›</Text>
+
+  </TouchableOpacity>
+);
+
+// --- PANTALLA PRINCIPAL ---
 export default function ProyectosScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { idCampo } = useLocalSearchParams();
-
-  const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const config = campoConfig[idCampo as string] || campoConfig[1];
-
-  useEffect(() => {
-    const fetchProyectos = async () => {
-      try {
-        const res = await fetch("http://192.168.1.72:5125/api/proyectos");
-        const data: Proyecto[] = await res.json();
-
-        const filtrados = data.filter(
-          (p) => p.idCampo === Number(idCampo)
-        );
-
-        setProyectos(filtrados);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProyectos();
-  }, [idCampo]);
-
-  const handleTema = (id: number) => {
-    router.push({
-        pathname: "/(tabs)/temas",
-        params: { idProyecto: id.toString() },
-    });
-};
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+
       {/* HEADER */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]} />
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.btnBack}>
+          <Text style={styles.btnBackTexto}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitulo}>Pensamiento Científico</Text>
+        {/* Espacio reservado para ícono del campo - reemplaza por <Image> cuando tengas el ícono */}
+        <View style={styles.headerIconoPlaceholder} />
+      </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* TITULO DINÁMICO */}
-        <Text style={styles.mainTitle}>
-          {config.title}
-        </Text>
-
-        <Text style={styles.mainSubtitle}>
-          Explora los proyectos disponibles en este campo formativo.
-        </Text>
-
-        {/* PROYECTOS */}
-        {proyectos.map((item) => (
-          <View key={item.idProyecto} style={styles.card}>
-            <View style={styles.cardLeft}>
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: config.color },
-                ]}
-              >
-                <Text style={styles.iconEmoji}>
-                  {config.emoji}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.cardRight}>
-              <Text
-                style={[
-                  styles.cardTitle,
-                  { color: config.labelColor },
-                ]}
-              >
-                {item.nombre}
-              </Text>
-
-              <Text style={styles.cardDesc}>
-                {item.descripcion}
-              </Text>
-
-              <TouchableOpacity
-                style={styles.startBtn}
-                onPress={() => handleTema(item.idProyecto)}
-              >
-                <Text style={styles.startBtnText}>
-                  Comenzar
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={14}
-                  color="#fff"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+      {/* LISTA CON SCROLL */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {proyectos.map((proyecto) => (
+          <TarjetaProyecto
+            key={proyecto.id}
+            titulo={proyecto.titulo}
+            descripcion={proyecto.descripcion}
+          />
         ))}
-
-        {/* SIN DATOS */}
-        {proyectos.length === 0 && (
-          <Text style={{ textAlign: "center", color: "#64748b" }}>
-            No hay proyectos disponibles
-          </Text>
-        )}
       </ScrollView>
+
     </SafeAreaView>
   );
 }
 
+// --- ESTILOS ---
 const styles = StyleSheet.create({
-  container: {
+
+  // Contenedor principal
+  safeArea: {
     flex: 1,
-    backgroundColor: "#f0f7ff",
-    justifyContent: "center",
+    backgroundColor: '#F3F4F6',
   },
+
+  // HEADER
   header: {
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    gap: 10,
+  },
+  btnBack: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnBackTexto: {
+    fontSize: 24,
+    color: '#374151',
+    lineHeight: 28,
+  },
+  headerTitulo: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  // Espacio reservado para ícono del campo en el header
+  headerIconoPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EDE9FE',
+  },
+
+  // SCROLL
+  scroll: {
+    flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 120,
-  },
-  mainTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#0f172a",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  mainSubtitle: {
-    fontSize: 14,
-    color: "#64748b",
-    textAlign: "center",
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
     padding: 16,
-    marginBottom: 14,
-    flexDirection: "row",
-    elevation: 4,
+    gap: 12,
   },
-  cardLeft: {
-    marginRight: 14,
-    justifyContent: "center",
+
+  // TARJETA
+  tarjeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    gap: 14,
+    // Sombra iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    // Sombra Android
+    elevation: 3,
   },
-  iconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    alignItems: "center",
-    justifyContent: "center",
+
+  // Placeholder de imagen circular (lado izquierdo)
+  // Reemplaza este View por <Image source={require('...')} style={styles.imagenPlaceholder} />
+  imagenPlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#F3F4F6',
+    flexShrink: 0,
   },
-  iconEmoji: {
-    fontSize: 34,
-  },
-  cardRight: {
+
+  // Bloque de texto (centro)
+  contenido: {
     flex: 1,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  cardDesc: {
-    fontSize: 12,
-    color: "#64748b",
-    marginBottom: 10,
-  },
-  startBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: "#5b8cdb",
     gap: 4,
   },
-  startBtnText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#fff",
+  titulo: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+    lineHeight: 21,
+  },
+  descripcion: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 17,
+  },
+
+  // Flecha de navegación (lado derecho)
+  flecha: {
+    fontSize: 26,
+    color: '#D1D5DB',
+    flexShrink: 0,
   },
 });
