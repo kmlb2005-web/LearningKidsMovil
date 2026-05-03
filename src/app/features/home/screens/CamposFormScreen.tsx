@@ -2,19 +2,21 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useRouter } from "expo-router";
 
+/* ========= TYPES ========= */
 type Field = {
   id: string;
   title: string;
   progress: number;
+  image: any;
   color: string;
 };
 
@@ -25,12 +27,44 @@ type ApiField = {
 
 export default function CamposFormScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const colors = ["#3b82f6", "#8b5cf6", "#f97316", "#22c55e"];
+  /* 🔥 MAPEO POR NOMBRE */
+  const getAsset = (name: string) => {
+    const n = name.toLowerCase();
 
+    if (n.includes("cientifico") || n.includes("científico"))
+      return {
+        image: require("../../../../../assets/images/CamposFormativos/SaberesyPensamientoCientifico.png"),
+        color: "#8b5cf6",
+      };
+
+    if (n.includes("lenguaje"))
+      return {
+        image: require("../../../../../assets/images/CamposFormativos/Lenguajes.png"),
+        color: "#f59e0b",
+      };
+
+    if (n.includes("ética") || n.includes("etica"))
+      return {
+        image: require("../../../../../assets/images/CamposFormativos/Etica,NaturalezaySociedades.png"),
+        color: "#22c55e",
+      };
+
+    if (n.includes("humano"))
+      return {
+        image: require("../../../../../assets/images/CamposFormativos/DeloHumanoyloComunitario.png"),
+        color: "#3b82f6",
+      };
+
+    return {
+      image: null,
+      color: "#8b5cf6",
+    };
+  };
+
+  /* ========= FETCH ========= */
   useEffect(() => {
     const fetchFields = async () => {
       try {
@@ -39,16 +73,21 @@ export default function CamposFormScreen() {
         );
         const data: ApiField[] = await res.json();
 
-        const mapped: Field[] = data.map((item, index) => ({
-          id: item.idCampo.toString(),
-          title: item.nombre.trim(),
-          progress: Math.floor(Math.random() * 100), // opcional
-          color: colors[index % colors.length],
-        }));
+        const mapped: Field[] = data.map((item) => {
+          const asset = getAsset(item.nombre);
+
+          return {
+            id: item.idCampo.toString(),
+            title: item.nombre.trim(),
+            progress: Math.floor(Math.random() * 100),
+            image: asset.image,
+            color: asset.color,
+          };
+        });
 
         setFields(mapped);
       } catch (error) {
-        console.error("Error fetching fields:", error);
+        console.error("Error:", error);
       } finally {
         setLoading(false);
       }
@@ -59,32 +98,41 @@ export default function CamposFormScreen() {
 
   const handlePress = (id: string) => {
     router.push({
-    pathname: "/(tabs)/proyectos",
-    params: { idCampo: id },
+      pathname: "/(tabs)/proyectos",
+      params: { idCampo: id },
     });
   };
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#3b82f6" />
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* HEADER */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={styles.header}>
         <Image
-          source={{ uri: "https://via.placeholder.com/120" }}
-          style={styles.headerImg}
+          source={require("../../../../../assets/images/CamposFormativos/fondo arriba.png")}
+          style={styles.bg}
         />
 
-        <Text style={styles.title}>¡Hola, Louz! 👋</Text>
-        <Text style={styles.subtitle}>
-          ¿Qué quieres aprender hoy?
-        </Text>
+        <View style={styles.headerContent}>
+          <Image
+            source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
+            style={styles.louz}
+          />
+
+          <View>
+            <Text style={styles.title}>¡Hola, Louz! 👋</Text>
+            <Text style={styles.subtitle}>
+              ¿Qué quieres aprender hoy?
+            </Text>
+          </View>
+        </View>
       </View>
 
       {/* GRID */}
@@ -92,119 +140,117 @@ export default function CamposFormScreen() {
         {fields.map((item) => (
           <TouchableOpacity
             key={item.id}
-            style={styles.card}
+            style={[styles.card, { backgroundColor: item.color + "30" }]}
             onPress={() => handlePress(item.id)}
           >
-            <Image
-              source={{ uri: "https://via.placeholder.com/80" }}
-              style={styles.icon}
-            />
-
-            <Text style={styles.cardTitle}>{item.title}</Text>
-
-            <View style={styles.progressContainer}>
-              <View
-                style={[
-                  styles.progressBar,
-                  {
-                    width: `${item.progress}%`,
-                    backgroundColor: item.color,
-                  },
-                ]}
-              />
+            {item.image && (
+              <Image source={item.image} style={styles.cardImage} />
+            )}
+            <View style={styles.cardOverlay}>
+              <Text style={styles.cardTitle}>{item.title}</Text>
             </View>
-
-            <Text style={styles.progressText}>
-              {item.progress}%
-            </Text>
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
+/* ========= STYLES ========= */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#eef2f3",
-    justifyContent: "center",
   },
 
   header: {
-    alignItems: "center",
-    paddingVertical: 20,
+    height: 250,
+    justifyContent: "flex-end",
+    marginTop: 0,
   },
 
-  headerImg: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
+  bg: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 70,
+    marginLeft: -15,
+  },
+
+  louz: {
+    width: 200,
+    height: 130,
+    marginRight: 12,
+    marginTop: 10,
   },
 
   title: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: "800",
     color: "#1e293b",
+    marginLeft: -20,
   },
 
   subtitle: {
     color: "#64748b",
     marginTop: 4,
+    fontSize: 16,
+    marginLeft: -20,
   },
 
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    padding: 16,
-    paddingBottom: 100,
+    paddingHorizontal: 16,
+    marginTop: 10,
   },
 
+  /* 🔥 CARD */
   card: {
     width: "48%",
-    backgroundColor: "#ffffff",
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 22,
     marginBottom: 16,
+    overflow: "hidden",
+    height: 220,
+    justifyContent: "center",
     alignItems: "center",
 
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
 
-  icon: {
-    width: 60,
-    height: 60,
-    marginBottom: 10,
+  cardImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    position: "absolute",
+  },
+
+  cardOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    backgroundColor: "#00000040",
+    alignItems: "center",
   },
 
   cardTitle: {
-    textAlign: "center",
     fontWeight: "700",
-    color: "#1e293b",
-    marginBottom: 10,
-  },
-
-  progressContainer: {
-    width: "100%",
-    height: 6,
-    backgroundColor: "#e5e7eb",
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-
-  progressBar: {
-    height: "100%",
-    borderRadius: 10,
-  },
-
-  progressText: {
-    marginTop: 6,
-    fontSize: 12,
-    color: "#64748b",
+    textAlign: "center",
+    fontSize: 13,
+    color: "#ffffff",
   },
 });

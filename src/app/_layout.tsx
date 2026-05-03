@@ -3,58 +3,57 @@ import { Slot, usePathname, useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-/* OCULTAR MENU EN ESTAS RUTAS */
-const HIDDEN_FOOTER_ROUTES = [
-  "/",
-  "/login",
-  "/register",
-  "/(tabs)/home",
-  "/home",
-];
-
 export default function RootLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const showFooter = !HIDDEN_FOOTER_ROUTES.includes(pathname);
+  console.log("PATHNAME:", pathname); // debug (puedes quitarlo luego)
+
+  /* 🔥 TABS ACTIVOS */
+  const isHome = pathname === "/home";
+  const isChat = pathname === "/chatScreen";
+  const isPruebas = pathname === "/campos";
+
+  /* 🔥 OCULTAR SOLO EN SPLASH, LOGIN Y REGISTER */
+  const hideFooter =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/register";
+
+  const showFooter = !hideFooter;
 
   return (
     <View style={styles.screen}>
       <View
         style={[
           styles.content,
-          showFooter && styles.contentWithFooter,
-          showFooter && { paddingBottom: 96 + insets.bottom },
+          showFooter && { paddingBottom: 90 },
         ]}
       >
         <Slot />
       </View>
 
-      {showFooter ? (
-        <View style={[styles.navbar, { paddingBottom: 12 + insets.bottom }]}>
+      {showFooter && (
+        <View
+          style={[
+            styles.navbar,
+            {
+              paddingBottom: Math.max(insets.bottom, 10),
+            },
+          ]}
+        >
           {/* INICIO */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => router.replace("/(tabs)/home")}
+            onPress={() => router.replace("/home")}
           >
             <Ionicons
               name="home"
               size={22}
-              color={
-                pathname === "/(tabs)/home" || pathname === "/home"
-                  ? "#5b8cdb"
-                  : "#94a3b8"
-              }
+              color={isHome ? "#5b8cdb" : "#94a3b8"}
             />
-
-            <Text
-              style={[
-                styles.navLabel,
-                (pathname === "/(tabs)/home" || pathname === "/home") &&
-                  styles.navLabelActive,
-              ]}
-            >
+            <Text style={[styles.navLabel, isHome && styles.navLabelActive]}>
               Inicio
             </Text>
           </TouchableOpacity>
@@ -62,25 +61,14 @@ export default function RootLayout() {
           {/* CHAT */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => router.push("/(tabs)/chatScreen")}
+            onPress={() => router.push("/chatScreen")}
           >
             <Ionicons
               name="chatbubble-ellipses-outline"
               size={22}
-              color={
-                pathname === "/(tabs)/chatScreen"
-                  ? "#5b8cdb"
-                  : "#94a3b8"
-              }
+              color={isChat ? "#5b8cdb" : "#94a3b8"}
             />
-
-            <Text
-              style={[
-                styles.navLabel,
-                pathname === "/(tabs)/chatScreen" &&
-                  styles.navLabelActive,
-              ]}
-            >
+            <Text style={[styles.navLabel, isChat && styles.navLabelActive]}>
               Chat
             </Text>
           </TouchableOpacity>
@@ -88,30 +76,21 @@ export default function RootLayout() {
           {/* PRUEBAS */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => router.push("/(tabs)/campos")}
+            onPress={() => router.push("/campos")}
           >
             <Ionicons
               name="clipboard-outline"
               size={22}
-              color={
-                pathname === "/(tabs)/campos"
-                  ? "#5b8cdb"
-                  : "#94a3b8"
-              }
+              color={isPruebas ? "#5b8cdb" : "#94a3b8"}
             />
-
             <Text
-              style={[
-                styles.navLabel,
-                pathname === "/(tabs)/campos" &&
-                  styles.navLabelActive,
-              ]}
+              style={[styles.navLabel, isPruebas && styles.navLabelActive]}
             >
               Pruebas
             </Text>
           </TouchableOpacity>
         </View>
-      ) : null}
+      )}
     </View>
   );
 }
@@ -126,15 +105,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  contentWithFooter: {
-    paddingBottom: 96,
-  },
-
   navbar: {
     position: "absolute",
     left: 18,
     right: 18,
-    bottom: 12,
+    bottom: 10,
     height: 78,
     backgroundColor: "#fff",
     borderRadius: 34,

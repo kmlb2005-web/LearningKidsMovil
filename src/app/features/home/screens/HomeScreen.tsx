@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -25,7 +24,7 @@ const HomeScreen = () => {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
       >
         {/* HEADER */}
         <View style={styles.header}>
@@ -151,38 +150,6 @@ const HomeScreen = () => {
           />
         </View>
       </ScrollView>
-
-      {/* MENU INFERIOR */}
-      <View style={styles.navbar}>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.replace("/(tabs)/home")}
-        >
-          <Ionicons name="home" size={24} color="#2E7DFF" />
-          <Text style={styles.navActive}>Inicio</Text>
-          <View style={styles.line} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/(tabs)/chatScreen")}
-        >
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={24}
-            color="#A0AEC0"
-          />
-          <Text style={styles.navText}>Chat</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => router.push("/(tabs)/campos")}
-        >
-          <Ionicons name="clipboard-outline" size={24} color="#A0AEC0" />
-          <Text style={styles.navText}>Pruebas</Text>
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 };
@@ -430,46 +397,5 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     resizeMode: "contain",
-  },
-
-  navbar: {
-    position: "absolute",
-    bottom: 12,
-    left: 18,
-    right: 18,
-    height: 78,
-    backgroundColor: "#fff",
-    borderRadius: 34,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    elevation: 14,
-  },
-
-  navItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  navText: {
-    fontSize: 11,
-    color: "#A0AEC0",
-    marginTop: 2,
-  },
-
-  navActive: {
-    fontSize: 11,
-    color: "#2E7DFF",
-    marginTop: 2,
-    fontWeight: "700",
-  },
-
-  line: {
-    marginTop: 4,
-    width: 18,
-    height: 3,
-    borderRadius: 3,
-    backgroundColor: "#2E7DFF",
   },
 });

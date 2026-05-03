@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -65,9 +66,9 @@ export default function TemasScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#3b82f6" />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -75,7 +76,7 @@ export default function TemasScreen() {
   const proyectoDesc = temas[0]?.proyecto?.descripcion || "";
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* HEADER */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={onBack}>
@@ -187,7 +188,7 @@ export default function TemasScreen() {
         source={{ uri: "https://via.placeholder.com/400x120" }}
         style={styles.footerImg}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
