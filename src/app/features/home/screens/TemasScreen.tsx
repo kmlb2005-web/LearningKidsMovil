@@ -1,153 +1,184 @@
-import React from 'react';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
+  ActivityIndicator,
+  Image,
+  SafeAreaView,
   ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+type Tema = {
+  idTema: number;
+  nombre: string;
+  descripcion: string;
+  idProyecto: number;
+  proyecto: {
+    nombre: string;
+    descripcion: string;
+  };
+};
 
 export default function TemasScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { idProyecto } = useLocalSearchParams();
+
+  const [temas, setTemas] = useState<Tema[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTemas = async () => {
+      try {
+        const res = await fetch("http://192.168.1.72:5125/api/temas");
+        const data: Tema[] = await res.json();
+
+        const filtrados = data.filter(
+          (t) => t.idProyecto === Number(idProyecto)
+        );
+
+        setTemas(filtrados);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTemas();
+  }, [idProyecto]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </SafeAreaView>
+    );
+  }
+
+  const proyectoNombre = temas[0]?.proyecto?.nombre || "Proyecto";
+  const proyectoDesc = temas[0]?.proyecto?.descripcion || "";
+
+  const imagenesLocales = [
+    require("../../../../../assets/images_3/uno.png"),
+    require("../../../../../assets/images_3/dos.png"),
+    require("../../../../../assets/images_3/tres.png"),
+    require("../../../../../assets/images_3/cuatro.png"),
+    require("../../../../../assets/images_3/cinco.png"),
+  ];
+
+  const onPressTema = (id: number) => {
+    router.push({
+      pathname: "/features/home/screens/PruebasScreen",
+      params: { idTema: id.toString() },
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       
       {/* HEADER */}
-      <View style={styles.header}>
-        <Text style={styles.back}>{'<'}</Text>
-        <Text style={styles.title}>El cuerpo humano</Text>
-        <View style={styles.headerRight} />
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={styles.headerTitle}>{proyectoNombre}</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* CARD PRINCIPAL */}
+        {/* CARD PRINCIPAL (VISUAL DEL PRIMER CÓDIGO) */}
         <View style={styles.mainCard}>
-          
-          {/* Placeholder imagen */}
-          <View style={styles.imagePlaceholder} />
+          <Image
+            source={require("../../../../../assets/images_3/doctor.png")}
+            style={styles.mainImage}
+            resizeMode="cover"
+          />
 
-          {/* Texto */}
-          <View style={styles.textContainer}>
-            <Text style={styles.mainTitle}>El cuerpo humano</Text>
-            <Text style={styles.description}>
-              Descubre cómo funciona tu cuerpo y la importancia del autocuidado.
-            </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.mainTitle}>{proyectoNombre}</Text>
+            <Text style={styles.mainDesc}>{proyectoDesc}</Text>
           </View>
         </View>
 
-        {/* LISTA DE TEMAS */}
+        {/* LISTA DE TEMAS (FUNCIONALIDAD DEL SEGUNDO + IMÁGENES) */}
         <View style={styles.list}>
-          {temas.map((tema, index) => (
-            <TouchableOpacity key={index} style={styles.item}>
-              
-              {/* Círculo izquierdo */}
-              <View style={styles.circle} />
+          {temas.map((item, index) => (
+            <TouchableOpacity
+              key={item.idTema}
+              style={styles.item}
+              onPress={() => onPressTema(item.idTema)}
+            >
+              <Image
+                source={imagenesLocales[index] || imagenesLocales[0]}
+                style={styles.circle}
+              />
 
-              {/* Texto */}
-              <View style={styles.itemText}>
-                <Text style={styles.itemTitle}>{tema.titulo}</Text>
-                <Text style={styles.itemDesc}>{tema.descripcion}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.itemTitle}>{item.nombre}</Text>
+                <Text style={styles.itemDesc}>{item.descripcion}</Text>
               </View>
 
-              {/* Flecha */}
-              <View style={styles.iconRight}>
-                <Text style={styles.arrow}>{'>'}</Text>
-              </View>
-
+              <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Footer decorativo */}
-        <View style={styles.footer} />
-
+        <View style={{ height: 120 }} />
       </ScrollView>
+
+      {/* 🔻 IMAGEN FIJA INFERIOR */}
+      <Image
+        source={require("../../../../../assets/images_3/fondoo.png")}
+        style={styles.bottomImage}
+        resizeMode="cover"
+      />
     </SafeAreaView>
   );
 }
 
-const temas = [
-  {
-    titulo: 'Los órganos y sus funciones',
-    descripcion: 'Conoce los órganos principales y qué hacen.',
-  },
-  {
-    titulo: 'Sistemas del cuerpo',
-    descripcion: 'Aprende cómo trabajan juntos los sistemas.',
-  },
-  {
-    titulo: 'Alimentación y nutrición',
-    descripcion: 'Descubre cómo los alimentos nos dan energía.',
-  },
-  {
-    titulo: 'Hábitos saludables',
-    descripcion: 'Aprende hábitos que cuidan tu cuerpo y mente.',
-  },
-  {
-    titulo: 'Prevención de enfermedades',
-    descripcion: 'Conoce cómo prevenir y cuidar tu salud.',
-  },
-];
-
+/* ========= STYLES ========= */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F5F7',
+    backgroundColor: "#F4F5F7",
   },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     padding: 16,
+    alignItems: "center",
   },
 
-  back: {
+  headerTitle: {
     fontSize: 18,
-  },
-
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
-  headerRight: {
-    width: 24,
+    fontWeight: "bold",
   },
 
   mainCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    margin: 16,
     padding: 16,
     borderRadius: 16,
     elevation: 3,
-    marginBottom: 16,
   },
 
-  imagePlaceholder: {
+  mainImage: {
     width: 70,
     height: 70,
     borderRadius: 12,
-    backgroundColor: '#E0E0E0',
     marginRight: 12,
-  },
-
-  textContainer: {
-    flex: 1,
-    justifyContent: 'center',
   },
 
   mainTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: "bold",
   },
 
-  description: {
+  mainDesc: {
     fontSize: 13,
-    color: '#666',
+    color: "#666",
   },
 
   list: {
@@ -155,49 +186,39 @@ const styles = StyleSheet.create({
   },
 
   item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
     padding: 14,
     borderRadius: 14,
     marginBottom: 12,
-    elevation: 2,
   },
 
   circle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#EAEAEA',
     marginRight: 12,
   },
 
-  itemText: {
-    flex: 1,
-  },
-
   itemTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 
   itemDesc: {
     fontSize: 12,
-    color: '#666',
-  },
-
-  iconRight: {
-    marginLeft: 8,
+    color: "#666",
   },
 
   arrow: {
-    fontSize: 16,
-    color: '#888',
+    fontSize: 18,
+    color: "#888",
   },
 
-  footer: {
-    height: 120,
-    marginTop: 20,
-    marginBottom: 20,
+  bottomImage: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    height: 100,
   },
 });
