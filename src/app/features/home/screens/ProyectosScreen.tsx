@@ -9,8 +9,18 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+// 🖼️ Imágenes locales del archivo 1 — ajusta las rutas a tu proyecto
+const imagenesLocales = [
+  require('../../../../../assets/images_2/doctor.png'),
+  require('../../../../../assets/images_2/hoja.png'),
+  require('../../../../../assets/images_2/microscopio.png'),
+  require('../../../../../assets/images_2/cohete.png'),
+  require('../../../../../assets/images_2/rayo.png'),
+];
 
 type Proyecto = {
   idProyecto: number;
@@ -41,28 +51,22 @@ export default function ProyectosScreen() {
       try {
         const res = await fetch("http://192.168.1.72:5125/api/proyectos");
         const data: Proyecto[] = await res.json();
-
-        const filtrados = data.filter(
-          (p) => p.idCampo === Number(idCampo)
-        );
-
-        setProyectos(filtrados);
+        setProyectos(data.filter((p) => p.idCampo === Number(idCampo)));
       } catch (error) {
         console.error("Error:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchProyectos();
   }, [idCampo]);
 
   const handleTema = (id: number) => {
     router.push({
-        pathname: "/(tabs)/temas",
-        params: { idProyecto: id.toString() },
+      pathname: "/(tabs)/temas",
+      params: { idProyecto: id.toString() },
     });
-};
+  };
 
   if (loading) {
     return (
@@ -74,72 +78,52 @@ export default function ProyectosScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* TITULO DINÁMICO */}
-        <Text style={styles.mainTitle}>
-          {config.title}
-        </Text>
-
+        <Text style={styles.mainTitle}>{config.title}</Text>
         <Text style={styles.mainSubtitle}>
           Explora los proyectos disponibles en este campo formativo.
         </Text>
 
-        {/* PROYECTOS */}
-        {proyectos.map((item) => (
+        {proyectos.map((item, index) => (
           <View key={item.idProyecto} style={styles.card}>
-            <View style={styles.cardLeft}>
-              <View
-                style={[
-                  styles.iconCircle,
-                  { backgroundColor: config.color },
-                ]}
-              >
-                <Text style={styles.iconEmoji}>
-                  {config.emoji}
-                </Text>
-              </View>
-            </View>
+            {/* 🖼️ Imagen local asignada por índice */}
+            <Image
+              source={imagenesLocales[index % imagenesLocales.length]}
+              style={styles.imagenProyecto}
+              resizeMode="contain"
+            />
 
             <View style={styles.cardRight}>
-              <Text
-                style={[
-                  styles.cardTitle,
-                  { color: config.labelColor },
-                ]}
-              >
+              <Text style={[styles.cardTitle, { color: config.labelColor }]}>
                 {item.nombre}
               </Text>
-
-              <Text style={styles.cardDesc}>
-                {item.descripcion}
-              </Text>
+              <Text style={styles.cardDesc}>{item.descripcion}</Text>
 
               <TouchableOpacity
                 style={styles.startBtn}
                 onPress={() => handleTema(item.idProyecto)}
               >
-                <Text style={styles.startBtnText}>
-                  Comenzar
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={14}
-                  color="#fff"
-                />
+                <Text style={styles.startBtnText}>Comenzar</Text>
+                <Ionicons name="chevron-forward" size={14} color="#fff" />
               </TouchableOpacity>
             </View>
           </View>
         ))}
 
-        {/* SIN DATOS */}
         {proyectos.length === 0 && (
           <Text style={{ textAlign: "center", color: "#64748b" }}>
             No hay proyectos disponibles
           </Text>
         )}
+
+        {/* 🖼️ Imagen decorativa inferior del archivo 1 */}
+        <Image
+          source={require('../../../../../assets/images_2/fondoo.png')}
+          style={styles.fondoInferior}
+          resizeMode="cover"
+        />
       </ScrollView>
     </SafeAreaView>
   );
@@ -156,7 +140,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 120,
+    paddingBottom: 40,
   },
   mainTitle: {
     fontSize: 26,
@@ -177,21 +161,16 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 14,
     flexDirection: "row",
-    elevation: 4,
-  },
-  cardLeft: {
-    marginRight: 14,
-    justifyContent: "center",
-  },
-  iconCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
     alignItems: "center",
-    justifyContent: "center",
+    elevation: 4,
+    gap: 14,
   },
-  iconEmoji: {
-    fontSize: 34,
+  // 🖼️ Estilo de la imagen (equivalente a imagenPlaceholder del archivo 1)
+  imagenProyecto: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#F3F4F6",
   },
   cardRight: {
     flex: 1,
@@ -220,5 +199,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#fff",
+  },
+  fondoInferior: {
+    width: "100%",
+    height: 130,
+    marginTop: 40,
+    marginBottom: 20,
   },
 });
