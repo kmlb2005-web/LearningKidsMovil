@@ -1,219 +1,391 @@
-import React, { useEffect, useState } from "react";
+import React from 'react';
 import {
-  ActivityIndicator,
-  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from 'react-native';
 
-import { useLocalSearchParams, useRouter } from "expo-router";
+// --- DATOS ESTÁTICOS ---
+const subtemas = [
+  {
+    id: '1',
+    titulo: 'Los órganos y sus funciones',
+    descripcion: 'Conoce los órganos principales y qué hacen.',
+    icono: 'check',
+  },
+  {
+    id: '2',
+    titulo: 'Sistemas del cuerpo',
+    descripcion: 'Aprende cómo trabajan juntos los sistemas del cuerpo.',
+    icono: 'flecha',
+  },
+  {
+    id: '3',
+    titulo: 'Alimentación y nutrición',
+    descripcion: 'Descubre cómo los alimentos nos dan energía.',
+    icono: 'candado',
+  },
+  {
+    id: '4',
+    titulo: 'Hábitos saludables',
+    descripcion: 'Aprende hábitos que cuidan tu cuerpo y tu mente.',
+    icono: 'candado',
+  },
+  {
+    id: '5',
+    titulo: 'Prevención de enfermedades',
+    descripcion: 'Conoce cómo prevenir y cuidar tu salud cada día.',
+    icono: 'candado',
+  },
+];
 
-type Prueba = {
-  idPrueba: number;
-  titulo: string;
-  idTema: number;
-  tema: {
-    nombre: string;
-  };
-  preguntas: any[];
-};
-
-export default function PruebasScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { idTema } = useLocalSearchParams();
-
-  const [pruebas, setPruebas] = useState<Prueba[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPruebas = async () => {
-      try {
-        const res = await fetch(
-          "http://192.168.1.72:5125/api/pruebas"
-        );
-        const data: Prueba[] = await res.json();
-
-        const filtradas = data.filter(
-          (p) => p.idTema === Number(idTema)
-        );
-
-        setPruebas(filtradas);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPruebas();
-  }, [idTema]);
-
-  const onBack = () => router.back();
-
-  const onStart = (id: number) => {
-    router.push({
-      pathname: "/(tabs)/formPruebas",
-      params: { idPrueba: id.toString() },
-    });
-  };
-
-  if (loading) {
+// --- ÍCONO DE ESTADO ---
+const IconoEstado = ({ tipo }: { tipo: string }) => {
+  if (tipo === 'check') {
     return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-      </SafeAreaView>
+      <View style={styles.iconoCheck}>
+        {/* Aquí va el icono de estado */}
+        <Text style={styles.iconoCheckTexto}>✓</Text>
+      </View>
     );
   }
-
-  const temaNombre = pruebas[0]?.tema?.nombre || "Tema";
-
+  if (tipo === 'flecha') {
+    return (
+      <View style={styles.iconoFlecha}>
+        {/* Aquí va el icono de estado */}
+        <Text style={styles.iconoFlechaTexto}>›</Text>
+      </View>
+    );
+  }
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.iconoCandado}>
+      {/* Aquí va el icono de estado */}
+      <Text style={styles.iconoCandadoTexto}>🔒</Text>
+    </View>
+  );
+};
+
+// --- TARJETA SUBTEMA ---
+const TarjetaSubtema = ({
+  titulo,
+  descripcion,
+  icono,
+  bloqueado,
+}: {
+  titulo: string;
+  descripcion: string;
+  icono: string;
+  bloqueado: boolean;
+}) => (
+  <View style={[styles.tarjeta, bloqueado && styles.tarjetaBloqueada]}>
+
+    {/* Círculo indicador izquierdo */}
+    <View style={[styles.circulo, bloqueado && styles.circuloBloqueado]}>
+      {/* Indicador visual (número o estado) */}
+    </View>
+
+    {/* Contenido textual */}
+    <View style={styles.contenido}>
+      <Text style={[styles.subtitulo, bloqueado && styles.textoApagado]}>
+        {titulo}
+      </Text>
+      <Text style={[styles.descripcion, bloqueado && styles.textoApagado]}>
+        {descripcion}
+      </Text>
+    </View>
+
+    {/* Ícono de estado derecho */}
+    <IconoEstado tipo={icono} />
+
+  </View>
+);
+
+// --- PANTALLA PRINCIPAL ---
+export default function TemasScreen() {
+  return (
+    <SafeAreaView style={styles.safeArea}>
+
       {/* HEADER */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={onBack}>
-          <Text style={styles.back}>←</Text>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.btnBack}>
+          <Text style={styles.btnBackTexto}>‹</Text>
         </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>
-          {temaNombre}
-        </Text>
-
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitulo}>El cuerpo humano</Text>
+        {/* Espaciador para centrar el título */}
+        <View style={styles.headerEspaciador} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {pruebas.map((item, index) => (
-          <View key={item.idPrueba} style={styles.card}>
-            <Image
-              source={{ uri: "https://via.placeholder.com/60" }}
-              style={styles.icon}
-            />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
 
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>
-                {item.titulo}
-              </Text>
+        {/* CARD PRINCIPAL DEL TEMA */}
+        <View style={styles.cardPrincipal}>
+          <View style={styles.cardFila}>
 
-              <Text style={styles.cardDesc}>
-                {index === 0
-                  ? "Practica lo que aprendiste en este tema."
-                  : "Pon a prueba todo lo que aprendiste."}
-              </Text>
+            {/* Espacio para imagen del tema */}
+            <View style={styles.imagenPlaceholder}>
+              {/* Aquí va la imagen del tema */}
+            </View>
 
-              <Text style={styles.stats}>
-                Preguntas: {item.preguntas.length}
+            {/* Texto descriptivo */}
+            <View style={styles.cardTexto}>
+              <Text style={styles.cardTitulo}>El cuerpo humano</Text>
+              <Text style={styles.cardDescripcion}>
+                Descubre cómo funciona tu cuerpo y la importancia del autocuidado.
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={
-                index === 0
-                  ? styles.btnGreen
-                  : styles.btnBlue
-              }
-              onPress={() => onStart(item.idPrueba)}
-            >
-              <Text style={styles.btnText}>Iniciar</Text>
-            </TouchableOpacity>
           </View>
-        ))}
 
-        {pruebas.length === 0 && (
-          <Text style={{ textAlign: "center", color: "#64748b" }}>
-            No hay pruebas disponibles
-          </Text>
-        )}
+          {/* Barra de progreso decorativa */}
+          <View style={styles.barraFondo}>
+            <View style={styles.barraRelleno} />
+          </View>
+        </View>
+
+        {/* LISTA DE SUBTEMAS */}
+        <View style={styles.listaTemas}>
+          {subtemas.map((subtema) => (
+            <TarjetaSubtema
+              key={subtema.id}
+              titulo={subtema.titulo}
+              descripcion={subtema.descripcion}
+              icono={subtema.icono}
+              bloqueado={subtema.icono === 'candado'}
+            />
+          ))}
+        </View>
+
+        {/* ILUSTRACIÓN INFERIOR DECORATIVA */}
+        {/* Reemplaza este View por <Image source={require('...')} style={styles.ilustracionContainer} resizeMode="cover" /> */}
+        <View style={styles.ilustracionContainer}>
+          {/* Aquí va la ilustración inferior (decoración) */}
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ========= STYLES ========= */
+// --- ESTILOS ---
 const styles = StyleSheet.create({
-  container: {
+
+  // Contenedor principal
+  safeArea: {
     flex: 1,
-    backgroundColor: "#eef2f3",
+    backgroundColor: '#F3F4F6',
   },
 
+  // HEADER
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  btnBack: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnBackTexto: {
+    fontSize: 24,
+    color: '#374151',
+    lineHeight: 28,
+  },
+  headerTitulo: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+    textAlign: 'center',
+  },
+  headerEspaciador: {
+    width: 36,
+  },
+
+  // SCROLL
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    gap: 12,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 0,
+  },
+
+  // CARD PRINCIPAL
+  cardPrincipal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     padding: 16,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardFila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
 
-  back: {
-    fontSize: 20,
-    color: "#1e293b",
+  // Placeholder imagen principal
+  // Reemplaza por: <Image source={require('...')} style={styles.imagenPlaceholder} resizeMode="cover" />
+  imagenPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F3F4F6',
+    flexShrink: 0,
   },
 
-  headerTitle: {
-    fontWeight: "700",
-    fontSize: 14,
-    color: "#1e293b",
+  cardTexto: {
+    flex: 1,
+    gap: 4,
+  },
+  cardTitulo: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  cardDescripcion: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 18,
   },
 
-  content: {
-    padding: 16,
-    paddingBottom: 40,
+  // Barra de progreso decorativa
+  barraFondo: {
+    height: 5,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  barraRelleno: {
+    width: '75%',
+    height: '100%',
+    backgroundColor: '#7C3AED',
+    borderRadius: 10,
   },
 
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
+  // LISTA SUBTEMAS
+  listaTemas: {
+    gap: 10,
+  },
+
+  // TARJETA SUBTEMA
+  tarjeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     padding: 14,
-    marginBottom: 12,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
     elevation: 2,
   },
-
-  icon: {
-    width: 50,
-    height: 50,
-    marginRight: 10,
+  tarjetaBloqueada: {
+    opacity: 0.6,
   },
 
-  cardTitle: {
-    fontWeight: "700",
+  // Círculo indicador izquierdo
+  circulo: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#EDE9FE',
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circuloBloqueado: {
+    backgroundColor: '#F3F4F6',
+  },
+
+  // Texto subtema
+  contenido: {
+    flex: 1,
+    gap: 2,
+  },
+  subtitulo: {
     fontSize: 14,
-    color: "#1e293b",
+    fontWeight: '700',
+    color: '#111827',
   },
-
-  cardDesc: {
+  descripcion: {
     fontSize: 12,
-    color: "#64748b",
+    color: '#6B7280',
+    lineHeight: 17,
+  },
+  textoApagado: {
+    color: '#9CA3AF',
   },
 
-  stats: {
-    fontSize: 11,
-    color: "#94a3b8",
+  // Íconos de estado
+  iconoCheck: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  iconoCheckTexto: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  iconoFlecha: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  iconoFlechaTexto: {
+    color: '#6B7280',
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  iconoCandado: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  iconoCandadoTexto: {
+    fontSize: 18,
+  },
+
+  // ILUSTRACIÓN INFERIOR
+  // Reemplaza por: <Image source={require('...')} style={styles.ilustracionContainer} resizeMode="cover" />
+  ilustracionContainer: {
+    width: '100%',
+    height: 130,
+    backgroundColor: '#D1FAE5',
     marginTop: 4,
-  },
-
-  btnGreen: {
-    backgroundColor: "#22c55e",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-
-  btnBlue: {
-    backgroundColor: "#3b82f6",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-
-  btnText: {
-    color: "#fff",
-    fontWeight: "700",
   },
 });

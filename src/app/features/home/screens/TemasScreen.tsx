@@ -1,319 +1,203 @@
-import React, { useEffect, useState } from "react";
+import React from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-import { useLocalSearchParams, useRouter } from "expo-router";
-
-type Tema = {
-  idTema: number;
-  nombre: string;
-  descripcion: string;
-  idProyecto: number;
-  proyecto: {
-    nombre: string;
-    descripcion: string;
-  };
-};
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TemasScreen() {
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { idProyecto } = useLocalSearchParams();
-
-  const [temas, setTemas] = useState<Tema[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTemas = async () => {
-      try {
-        const res = await fetch(
-          "http://192.168.1.72:5125/api/temas"
-        );
-        const data: Tema[] = await res.json();
-
-        const filtrados = data.filter(
-          (t) => t.idProyecto === Number(idProyecto)
-        );
-
-        setTemas(filtrados);
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTemas();
-  }, [idProyecto]);
-
-  const onBack = () => router.back();
-
-  const onPressTema = (id: number) => {
-    router.push({
-        pathname: "/features/home/screens/PruebasScreen",
-        params: { idTema: id.toString() },
-    });
-  };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-      </SafeAreaView>
-    );
-  }
-
-  const proyectoNombre = temas[0]?.proyecto?.nombre || "Proyecto";
-  const proyectoDesc = temas[0]?.proyecto?.descripcion || "";
-
   return (
     <SafeAreaView style={styles.container}>
+      
       {/* HEADER */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={onBack}>
-          <Text style={styles.back}>←</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>
-          {proyectoNombre}
-        </Text>
-
-        <View style={styles.points}>
-          <Text style={styles.pointsText}>⭐ 120</Text>
-        </View>
+      <View style={styles.header}>
+        <Text style={styles.back}>{'<'}</Text>
+        <Text style={styles.title}>El cuerpo humano</Text>
+        <View style={styles.headerRight} />
       </View>
 
-      {/* INFO CARD */}
-      <View style={styles.infoCard}>
-        <Image
-          source={{ uri: "https://via.placeholder.com/80" }}
-          style={styles.avatar}
-        />
+      <ScrollView showsVerticalScrollIndicator={false}>
 
-        <View style={{ flex: 1 }}>
-          <Text style={styles.infoTitle}>
-            {proyectoNombre}
-          </Text>
+        {/* CARD PRINCIPAL */}
+        <View style={styles.mainCard}>
+          
+          {/* Placeholder imagen */}
+          <View style={styles.imagePlaceholder} />
 
-          <Text style={styles.infoDesc}>
-            {proyectoDesc}
-          </Text>
-
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: "60%" }]} />
+          {/* Texto */}
+          <View style={styles.textContainer}>
+            <Text style={styles.mainTitle}>El cuerpo humano</Text>
+            <Text style={styles.description}>
+              Descubre cómo funciona tu cuerpo y la importancia del autocuidado.
+            </Text>
           </View>
         </View>
-      </View>
 
-      {/* TEMAS */}
-      <ScrollView contentContainerStyle={styles.list}>
-        {temas.map((item, idx) => {
-          const status =
-            idx === 0 ? "active" : "locked"; // simple lógica
+        {/* LISTA DE TEMAS */}
+        <View style={styles.list}>
+          {temas.map((tema, index) => (
+            <TouchableOpacity key={index} style={styles.item}>
+              
+              {/* Círculo izquierdo */}
+              <View style={styles.circle} />
 
-          return (
-            <TouchableOpacity
-              key={item.idTema}
-              activeOpacity={status === "locked" ? 1 : 0.7}
-              onPress={() =>
-                status !== "locked" && onPressTema(item.idTema)
-              }
-              style={[
-                styles.temaCard,
-                status === "active" && styles.activeCard,
-                status === "locked" && styles.lockedCard,
-              ]}
-            >
-              {/* NUMERO */}
-              <View
-                style={[
-                  styles.circle,
-                  status === "active" && styles.circleActive,
-                ]}
-              >
-                <Text style={styles.circleText}>
-                  {idx + 1}
-                </Text>
+              {/* Texto */}
+              <View style={styles.itemText}>
+                <Text style={styles.itemTitle}>{tema.titulo}</Text>
+                <Text style={styles.itemDesc}>{tema.descripcion}</Text>
               </View>
 
-              {/* TEXTO */}
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={[
-                    styles.temaTitle,
-                    status === "locked" && styles.textMuted,
-                  ]}
-                >
-                  {item.nombre}
-                </Text>
-
-                <Text
-                  style={[
-                    styles.temaDesc,
-                    status === "locked" && styles.textMuted,
-                  ]}
-                >
-                  {item.descripcion}
-                </Text>
+              {/* Flecha */}
+              <View style={styles.iconRight}>
+                <Text style={styles.arrow}>{'>'}</Text>
               </View>
 
-              {/* ICONO */}
-              {status === "active" && (
-                <Text style={styles.arrow}>›</Text>
-              )}
-              {status === "locked" && (
-                <Text style={styles.lock}>🔒</Text>
-              )}
             </TouchableOpacity>
-          );
-        })}
+          ))}
+        </View>
 
-        {temas.length === 0 && (
-          <Text style={{ textAlign: "center", color: "#64748b" }}>
-            No hay temas disponibles
-          </Text>
-        )}
+        {/* Footer decorativo */}
+        <View style={styles.footer} />
+
       </ScrollView>
-
-      <Image
-        source={{ uri: "https://via.placeholder.com/400x120" }}
-        style={styles.footerImg}
-      />
     </SafeAreaView>
   );
 }
 
-/* ========= STYLES ========= */
+const temas = [
+  {
+    titulo: 'Los órganos y sus funciones',
+    descripcion: 'Conoce los órganos principales y qué hacen.',
+  },
+  {
+    titulo: 'Sistemas del cuerpo',
+    descripcion: 'Aprende cómo trabajan juntos los sistemas.',
+  },
+  {
+    titulo: 'Alimentación y nutrición',
+    descripcion: 'Descubre cómo los alimentos nos dan energía.',
+  },
+  {
+    titulo: 'Hábitos saludables',
+    descripcion: 'Aprende hábitos que cuidan tu cuerpo y mente.',
+  },
+  {
+    titulo: 'Prevención de enfermedades',
+    descripcion: 'Conoce cómo prevenir y cuidar tu salud.',
+  },
+];
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#eef2f3" },
+  container: {
+    flex: 1,
+    backgroundColor: '#F4F5F7',
+  },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
   },
 
-  back: { fontSize: 20 },
+  back: {
+    fontSize: 18,
+  },
 
-  headerTitle: {
-    fontWeight: "700",
+  title: {
     fontSize: 16,
+    fontWeight: 'bold',
   },
 
-  points: {
-    backgroundColor: "#facc15",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+  headerRight: {
+    width: 24,
   },
 
-  pointsText: { fontWeight: "700" },
-
-  infoCard: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    margin: 16,
+  mainCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
     padding: 16,
-    borderRadius: 20,
-  },
-
-  avatar: {
-    width: 60,
-    height: 60,
-    marginRight: 12,
-    borderRadius: 12,
-  },
-
-  infoTitle: { fontWeight: "700" },
-  infoDesc: { fontSize: 12, color: "#64748b" },
-
-  progressContainer: {
-    height: 6,
-    backgroundColor: "#e5e7eb",
-    borderRadius: 10,
-    marginTop: 6,
-  },
-
-  progressBar: {
-    height: "100%",
-    backgroundColor: "#3b82f6",
-    borderRadius: 10,
-  },
-
-  list: { padding: 16, paddingBottom: 110 },
-
-  temaCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 14,
     borderRadius: 16,
+    elevation: 3,
+    marginBottom: 16,
+  },
+
+  imagePlaceholder: {
+    width: 70,
+    height: 70,
+    borderRadius: 12,
+    backgroundColor: '#E0E0E0',
+    marginRight: 12,
+  },
+
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+
+  mainTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+
+  description: {
+    fontSize: 13,
+    color: '#666',
+  },
+
+  list: {
+    paddingHorizontal: 16,
+  },
+
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 14,
+    borderRadius: 14,
     marginBottom: 12,
-  },
-
-  activeCard: {
-    borderWidth: 2,
-    borderColor: "#22c55e",
-  },
-
-  lockedCard: {
-    opacity: 0.5,
+    elevation: 2,
   },
 
   circle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#e5e7eb",
-    justifyContent: "center",
-    alignItems: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EAEAEA',
     marginRight: 12,
   },
 
-  circleActive: {
-    backgroundColor: "#60a5fa",
+  itemText: {
+    flex: 1,
   },
 
-  circleText: {
-    fontWeight: "800",
+  itemTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 
-  temaTitle: {
-    fontWeight: "700",
-    fontSize: 13,
-  },
-
-  temaDesc: {
+  itemDesc: {
     fontSize: 12,
-    color: "#64748b",
+    color: '#666',
   },
 
-  textMuted: {
-    color: "#94a3b8",
+  iconRight: {
+    marginLeft: 8,
   },
 
   arrow: {
-    fontSize: 22,
-  },
-
-  lock: {
     fontSize: 16,
+    color: '#888',
   },
 
-  footerImg: {
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    height: 110,
+  footer: {
+    height: 120,
+    marginTop: 20,
+    marginBottom: 20,
   },
 });

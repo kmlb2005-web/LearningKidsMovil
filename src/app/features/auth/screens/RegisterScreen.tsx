@@ -19,11 +19,9 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const [nombre, setNombre] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-
   const [apellidoInput, setApellidoInput] = useState("");
   const [emailInput, setEmailInput] = useState("");
+  const [password, setPassword] = useState("");
   const [genero, setGenero] = useState<"nino" | "nina" | null>(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
@@ -38,21 +36,12 @@ export default function RegisterScreen() {
       return;
     }
 
-    const usuario = {
-      nombre: `${nombre} ${apellidoInput}`,
-      username: emailInput,
-      password: password,
-      idRol: 2,
-    };
-
-    console.log(usuario);
-
     Alert.alert("¡Cuenta creada!", `Bienvenido ${nombre}`);
   };
 
   return (
     <ImageBackground
-      source={require("../../../../../assets/images/fondos/fondo.png")}
+      source={require("../../../../../assets/images/Splash/fondo.png")}
       resizeMode="cover"
       style={{ flex: 1 }}
     >
@@ -60,22 +49,14 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: "center",
-            paddingHorizontal: 10,
-          }}
-        >
-          <View style={{ padding: 10 }}>
-            {/* Card */}
-            <View style={styles.card}>
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={styles.card}>
             <Text style={styles.title}>Crea tu Cuenta</Text>
-            <Text style={styles.subtitle}>¡Únete a la aventura!</Text>
+            <Text style={styles.subtitle}>⭐ ¡Únete a la aventura! ⭐</Text>
 
             <View style={styles.logoWrap}>
               <Image
-                source={require("../../../../../assets/images/logos/logoCuadrado.png")}
+                source={require("../../../../../assets/images/Register/louz.png")}
                 style={styles.logoImage}
               />
             </View>
@@ -83,45 +64,64 @@ export default function RegisterScreen() {
             <View style={styles.row}>
               <View style={styles.half}>
                 <Text style={styles.label}>PRIMER NOMBRE</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej. Leo"
-                  placeholderTextColor="#94a3b8"
-                  value={nombre}
-                  onChangeText={setNombre}
-                />
+                <View style={styles.inputRow}>
+                  <Ionicons
+                    name="person"
+                    size={18}
+                    color="#4CD964"
+                  />
+                  <TextInput
+                    style={styles.inputInner}
+                    placeholder="Ej. Leo"
+                    placeholderTextColor="#94a3b8"
+                    value={nombre}
+                    onChangeText={setNombre}
+                  />
+                </View>
               </View>
 
               <View style={styles.half}>
                 <Text style={styles.label}>PRIMER APELLIDO</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej. Pérez"
-                  placeholderTextColor="#94a3b8"
-                  value={apellidoInput}
-                  onChangeText={setApellidoInput}
-                />
+                <View style={styles.inputRow}>
+                  <Ionicons
+                    name="person"
+                    size={18}
+                    color="#4CD964"
+                  />
+                  <TextInput
+                    style={styles.inputInner}
+                    placeholder="Ej. Pérez"
+                    placeholderTextColor="#94a3b8"
+                    value={apellidoInput}
+                    onChangeText={setApellidoInput}
+                  />
+                </View>
               </View>
             </View>
 
             <Text style={styles.label}>CORREO ELECTRÓNICO</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="mail-outline" size={18} color="#64748b" />
+              <Ionicons
+                name="mail-outline"
+                size={18}
+                color="#2F80ED"
+              />
               <TextInput
                 style={styles.inputInner}
                 placeholder="ejemplo@correo.com"
                 placeholderTextColor="#94a3b8"
                 value={emailInput}
-                onChangeText={(t) => {
-                  setEmailInput(t);
-                  setUsername(t);
-                }}
+                onChangeText={setEmailInput}
               />
             </View>
 
             <Text style={styles.label}>CONTRASEÑA</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="lock-closed-outline" size={18} color="#64748b" />
+              <Ionicons
+                name="lock-closed-outline"
+                size={18}
+                color="#9B6BFF"
+              />
               <TextInput
                 style={styles.inputInner}
                 placeholder="Mínimo 8 caracteres"
@@ -136,21 +136,16 @@ export default function RegisterScreen() {
                 <Ionicons
                   name={passwordVisible ? "eye-off-outline" : "eye-outline"}
                   size={18}
-                  color="#64748b"
+                  color="#9B6BFF"
                 />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.centerLabel}>
-              ¿ERES NIÑO O NIÑA?
-            </Text>
+            <Text style={styles.centerLabel}>¿ERES NIÑO O NIÑA?</Text>
 
             <View style={styles.generoRow}>
               <TouchableOpacity
-                style={[
-                  styles.generoBtn,
-                  genero === "nino" && styles.active,
-                ]}
+                style={[styles.generoBtn, genero === "nino" && styles.active]}
                 onPress={() => setGenero("nino")}
               >
                 <Text style={styles.emoji}>🧒</Text>
@@ -169,12 +164,11 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Botón */}
             <TouchableOpacity style={styles.btn} onPress={handleRegister}>
+              <Ionicons name="star" size={24} color="#F59E0B" />
               <Text style={styles.btnText}>¡REGISTRARME!</Text>
             </TouchableOpacity>
 
-            {/* 🔥 Login */}
             <Text style={styles.loginText}>
               ¿Ya tienes cuenta?{" "}
               <Text
@@ -184,7 +178,6 @@ export default function RegisterScreen() {
                 Inicia sesión
               </Text>
             </Text>
-            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -193,42 +186,46 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 14,
+  },
+
   card: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     borderRadius: 30,
-    paddingVertical: 44,
-    paddingHorizontal: 30,
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-    minHeight: 620,
+    padding: 28,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 8,
   },
 
   title: {
-    fontSize: 26,
-    fontWeight: "800",
+    fontSize: 34,
+    fontWeight: "700",
     textAlign: "center",
-    color: "#0f172a",
+    color: "#081B54",
   },
 
   subtitle: {
     textAlign: "center",
-    color: "#64748b",
-    marginBottom: 20,
+    color: "#1A73E8",
+    marginTop: 8,
+    marginBottom: 18,
+    fontSize: 16,
+    fontWeight: "600",
   },
 
   logoWrap: {
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 18,
   },
 
   logoImage: {
-    width: 112,
-    height: 112,
+    width: 120,
+    height: 120,
     borderRadius: 24,
   },
 
@@ -244,93 +241,98 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#1e293b",
-    marginTop: 10,
+    color: "#0f3b82",
     marginBottom: 6,
-  },
-
-  input: {
-    backgroundColor: "#f1f5f9",
-    borderRadius: 20,
-    padding: 12,
-    marginBottom: 10,
-    color: "#0f172a",
   },
 
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f1f5f9",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 2,
-    marginBottom: 12,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    height: 52,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
   },
 
   inputInner: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 10,
     color: "#0f172a",
+    fontSize: 15,
   },
 
   centerLabel: {
     textAlign: "center",
-    marginTop: 14,
+    marginTop: 12,
     fontWeight: "700",
-    color: "#1e293b",
+    color: "#1A73E8",
   },
 
   generoRow: {
     flexDirection: "row",
     justifyContent: "center",
-    gap: 20,
-    marginVertical: 16,
+    gap: 16,
+    marginVertical: 18,
   },
 
   generoBtn: {
     padding: 16,
     borderRadius: 20,
-    backgroundColor: "#f1f5f9",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
     alignItems: "center",
+    width: 110,
   },
 
   active: {
-    backgroundColor: "#dbeafe",
+    backgroundColor: "#DBEAFE",
+    borderColor: "#60A5FA",
   },
 
   activePink: {
-    backgroundColor: "#fce7f3",
+    backgroundColor: "#FCE7F3",
+    borderColor: "#F9A8D4",
   },
 
   emoji: {
-    fontSize: 30,
+    fontSize: 34,
   },
 
   generoText: {
-    color: "#1e293b",
+    marginTop: 8,
+    fontWeight: "600",
+    color: "#334155",
   },
 
   btn: {
-    backgroundColor: "#facc15",
-    borderRadius: 20,
+    backgroundColor: "#FACC15",
+    borderRadius: 25,
     padding: 18,
     alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 10,
     marginTop: 10,
   },
 
   btnText: {
     fontWeight: "800",
-    color: "#1e293b",
+    color: "#081B54",
+    fontSize: 18,
   },
 
   loginText: {
     textAlign: "center",
+    marginTop: 18,
     color: "#64748b",
-    marginTop: 16,
   },
 
   loginLink: {
-    color: "#2563eb",
+    color: "#2563EB",
     fontWeight: "700",
   },
 });

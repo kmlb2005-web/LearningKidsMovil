@@ -3,78 +3,94 @@ import { Slot, usePathname, useRouter } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const HIDDEN_FOOTER_ROUTES = ["/", "/login", "/register"];
-
 export default function RootLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const showFooter = !HIDDEN_FOOTER_ROUTES.includes(pathname);
+
+  console.log("PATHNAME:", pathname); // debug (puedes quitarlo luego)
+
+  /* 🔥 TABS ACTIVOS */
+  const isHome = pathname === "/home";
+  const isChat = pathname === "/chatScreen";
+  const isPruebas = pathname === "/campos";
+
+  /* 🔥 OCULTAR SOLO EN SPLASH, LOGIN Y REGISTER */
+  const hideFooter =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/register";
+
+  const showFooter = !hideFooter;
 
   return (
     <View style={styles.screen}>
       <View
         style={[
           styles.content,
-          showFooter && styles.contentWithFooter,
-          showFooter && { paddingBottom: 84 + insets.bottom },
+          showFooter && { paddingBottom: 90 },
         ]}
       >
         <Slot />
       </View>
 
-      {showFooter ? (
-        <View style={[styles.navbar, { paddingBottom: 12 + insets.bottom }]}>
-          <TouchableOpacity style={styles.navItem} onPress={() => router.replace("/home")}>
+      {showFooter && (
+        <View
+          style={[
+            styles.navbar,
+            {
+              paddingBottom: Math.max(insets.bottom, 10),
+            },
+          ]}
+        >
+          {/* INICIO */}
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => router.replace("/home")}
+          >
             <Ionicons
               name="home"
               size={22}
-              color={pathname === "/home" ? "#5b8cdb" : "#94a3b8"}
+              color={isHome ? "#5b8cdb" : "#94a3b8"}
             />
-            <Text style={[styles.navLabel, pathname === "/home" && styles.navLabelActive]}>
+            <Text style={[styles.navLabel, isHome && styles.navLabelActive]}>
               Inicio
             </Text>
           </TouchableOpacity>
 
+          {/* CHAT */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => router.push("/(tabs)/chatScreen")}
+            onPress={() => router.push("/chatScreen")}
           >
             <Ionicons
               name="chatbubble-ellipses-outline"
               size={22}
-              color={pathname === "/(tabs)/chatScreen" ? "#5b8cdb" : "#94a3b8"}
+              color={isChat ? "#5b8cdb" : "#94a3b8"}
             />
-            <Text
-              style={[
-                styles.navLabel,
-                pathname === "/(tabs)/chatScreen" && styles.navLabelActive,
-              ]}
-            >
+            <Text style={[styles.navLabel, isChat && styles.navLabelActive]}>
               Chat
             </Text>
           </TouchableOpacity>
 
+          {/* PRUEBAS */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => router.push("/(tabs)/campos")}
+            onPress={() => router.push("/campos")}
           >
             <Ionicons
               name="clipboard-outline"
               size={22}
-              color={pathname === "/(tabs)/campos" ? "#5b8cdb" : "#94a3b8"}
+              color={isPruebas ? "#5b8cdb" : "#94a3b8"}
             />
             <Text
-              style={[
-                styles.navLabel,
-                pathname === "/(tabs)/campos" && styles.navLabelActive,
-              ]}
+              style={[styles.navLabel, isPruebas && styles.navLabelActive]}
             >
               Pruebas
             </Text>
           </TouchableOpacity>
         </View>
-      ) : null}
+      )}
     </View>
   );
 }
@@ -84,40 +100,45 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#e8f5f0",
   },
+
   content: {
     flex: 1,
   },
-  contentWithFooter: {
-    paddingBottom: 84,
-  },
+
   navbar: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: "row",
+    left: 18,
+    right: 18,
+    bottom: 10,
+    height: 78,
     backgroundColor: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    borderRadius: 34,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 10,
   },
+
   navItem: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     gap: 2,
   },
+
   navLabel: {
     fontSize: 11,
     color: "#94a3b8",
     fontWeight: "500",
   },
+
   navLabelActive: {
     color: "#5b8cdb",
+    fontWeight: "700",
   },
 });

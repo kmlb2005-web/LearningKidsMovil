@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
+    ActivityIndicator,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useLocalSearchParams } from "expo-router";
 
@@ -78,7 +78,7 @@ export default function FormPruebas() {
   /* ========= LOADING ========= */
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView edges={["top"]} style={styles.container}>
         <ActivityIndicator size="large" color="#3b82f6" />
       </SafeAreaView>
     );
@@ -86,7 +86,7 @@ export default function FormPruebas() {
 
   if (questions.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView edges={["top"]} style={styles.container}>
         <Text>No hay preguntas</Text>
       </SafeAreaView>
     );
@@ -122,7 +122,7 @@ export default function FormPruebas() {
     const score = calculateScore();
 
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView edges={["top"]} style={styles.container}>
         <View style={styles.resultContainer}>
           <Text style={styles.resultTitle}>
             Resultado final
@@ -156,7 +156,7 @@ export default function FormPruebas() {
 
   /* ========= UI ========= */
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={["top"]} style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.progress}>
           {current + 1} / {questions.length}

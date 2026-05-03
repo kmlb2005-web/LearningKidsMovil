@@ -1,14 +1,14 @@
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  Image,
   Animated,
-  StyleSheet,
   Dimensions,
   Easing,
+  Image,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
@@ -151,15 +151,16 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    width: 400,
-    height: 220,
-    marginBottom: 20,
+    width: 460,
+    height: 250,
+    marginBottom: -8,
   },
 
   circleContainer: {
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 30,
+    marginVertical: 20,
+    marginTop: -24,
   },
 
   circle: {
