@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useLocalSearchParams } from "expo-router";
+
+import { getAuthenticatedUser } from "../../../../shared/utils/authSession";
 
 /* ========= TYPES ========= */
 type ApiRespuesta = {
@@ -41,6 +43,8 @@ export default function FormPruebas() {
   const [selected, setSelected] = useState<number | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [finished, setFinished] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [saveError, setSaveError] = useState(false);
 
   /* ========= FETCH ========= */
   useEffect(() => {
@@ -105,6 +109,10 @@ export default function FormPruebas() {
       setCurrent(current + 1);
       setSelected(null);
     } else {
+      const correct = newAnswers.filter(
+        (ans, i) => ans === questions[i].correct
+      ).length;
+      saveResult(correct);
       setFinished(true);
     }
   };
@@ -115,6 +123,58 @@ export default function FormPruebas() {
       if (ans === questions[i].correct) correct++;
     });
     return correct;
+  };
+
+  const saveResult = async (score: number) => {
+    const authUser = getAuthenticatedUser();
+
+    if (!authUser?.idUsuario) {
+      setSaveError(true);
+      setSaveMessage("No se encontro el usuario autenticado. Inicia sesion de nuevo.");
+      return;
+    }
+
+    const calificacion = parseFloat(
+      ((score / questions.length) * 100).toFixed(2)
+    );
+
+    try {
+      const response = await fetch("http://192.168.1.72:5125/api/resultados", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idAlumno: authUser.idUsuario,
+          idPrueba: Number(idPrueba),
+          calificacion,
+          fecha: new Date().toISOString(),
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const backendMessage =
+          (payload && typeof payload === "object" && "message" in payload
+            ? String((payload as { message?: string }).message)
+            : "No se pudo guardar el resultado.") ||
+          "No se pudo guardar el resultado.";
+
+        setSaveError(true);
+        setSaveMessage(backendMessage);
+        return;
+      }
+
+      setSaveError(false);
+      setSaveMessage("Resultado guardado correctamente.");
+    } catch (error) {
+      console.error("Error al guardar resultado:", error);
+      setSaveError(true);
+      setSaveMessage(
+        error instanceof Error
+          ? error.message
+          : "Error de red al guardar el resultado."
+      );
+    }
   };
 
   /* ========= RESULT ========= */
@@ -136,6 +196,17 @@ export default function FormPruebas() {
             Puntaje obtenido
           </Text>
 
+          {saveMessage ? (
+            <Text
+              style={[
+                styles.saveMessage,
+                saveError ? styles.saveMessageError : styles.saveMessageSuccess,
+              ]}
+            >
+              {saveMessage}
+            </Text>
+          ) : null}
+
           <TouchableOpacity
             style={styles.btn}
             onPress={() => {
@@ -143,6 +214,8 @@ export default function FormPruebas() {
               setAnswers([]);
               setFinished(false);
               setSelected(null);
+              setSaveMessage("");
+              setSaveError(false);
             }}
           >
             <Text style={styles.btnText}>
@@ -274,5 +347,19 @@ const styles = StyleSheet.create({
   subtitle: {
     color: "#64748b",
     marginBottom: 20,
+  },
+
+  saveMessage: {
+    textAlign: "center",
+    marginBottom: 12,
+    fontWeight: "600",
+  },
+
+  saveMessageError: {
+    color: "#dc2626",
+  },
+
+  saveMessageSuccess: {
+    color: "#16a34a",
   },
 });

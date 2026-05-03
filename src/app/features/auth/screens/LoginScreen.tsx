@@ -15,6 +15,8 @@ import {
     View,
 } from "react-native";
 
+  import { setAuthenticatedUser } from "../../../../shared/utils/authSession";
+
 type LoginResponse = {
   message?: string;
   usuario?: {
@@ -72,6 +74,12 @@ export default function Index() {
           const backendMessage = data?.message || "No se pudo iniciar sesión.";
 
           if (response.ok && data?.usuario) {
+            setAuthenticatedUser({
+              idUsuario: data.usuario.idUsuario,
+              nombre: data.usuario.nombre,
+              username: data.usuario.username,
+              idRol: data.usuario.idRol,
+            });
             setFeedbackMessage("");
             router.replace("/home");
             return;
