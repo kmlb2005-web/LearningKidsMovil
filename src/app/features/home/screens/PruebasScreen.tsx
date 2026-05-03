@@ -1,120 +1,197 @@
-import React from 'react';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 
-// --- DATOS ESTÁTICOS ---
-const subtemas = [
-  {
-    id: '1',
-    titulo: 'Los órganos y sus funciones',
-    descripcion: 'Conoce los órganos principales y qué hacen.',
-    icono: 'check',
-  },
-  {
-    id: '2',
-    titulo: 'Sistemas del cuerpo',
-    descripcion: 'Aprende cómo trabajan juntos los sistemas del cuerpo.',
-    icono: 'flecha',
-  },
-  {
-    id: '3',
-    titulo: 'Alimentación y nutrición',
-    descripcion: 'Descubre cómo los alimentos nos dan energía.',
-    icono: 'candado',
-  },
-  {
-    id: '4',
-    titulo: 'Hábitos saludables',
-    descripcion: 'Aprende hábitos que cuidan tu cuerpo y tu mente.',
-    icono: 'candado',
-  },
-  {
-    id: '5',
-    titulo: 'Prevención de enfermedades',
-    descripcion: 'Conoce cómo prevenir y cuidar tu salud cada día.',
-    icono: 'candado',
-  },
-];
+import { getAuthenticatedUser } from "../../../../shared/utils/authSession";
 
-// --- ÍCONO DE ESTADO ---
-const IconoEstado = ({ tipo }: { tipo: string }) => {
-  if (tipo === 'check') {
-    return (
-      <View style={styles.iconoCheck}>
-        {/* Aquí va el icono de estado */}
-        <Text style={styles.iconoCheckTexto}>✓</Text>
-      </View>
-    );
-  }
-  if (tipo === 'flecha') {
-    return (
-      <View style={styles.iconoFlecha}>
-        {/* Aquí va el icono de estado */}
-        <Text style={styles.iconoFlechaTexto}>›</Text>
-      </View>
-    );
-  }
-  return (
-    <View style={styles.iconoCandado}>
-      {/* Aquí va el icono de estado */}
-      <Text style={styles.iconoCandadoTexto}>🔒</Text>
-    </View>
-  );
+type Prueba = {
+  idPrueba: number;
+  titulo: string;
+  idTema: number;
+  creadoPor: number;
+  tema?: {
+    idTema: number;
+    nombre: string;
+    descripcion: string;
+    idProyecto: number;
+  } | null;
+  preguntas: Array<{ idPregunta: number; texto: string }>;
 };
 
-// --- TARJETA SUBTEMA ---
-const TarjetaSubtema = ({
-  titulo,
-  descripcion,
-  icono,
-  bloqueado,
-}: {
-  titulo: string;
-  descripcion: string;
-  icono: string;
-  bloqueado: boolean;
-}) => (
-  <View style={[styles.tarjeta, bloqueado && styles.tarjetaBloqueada]}>
+type ResultadoApi = {
+  idResultado: number;
+  idAlumno: number;
+  idPrueba: number;
+  calificacion: number;
+  fecha: string;
+  tituloPrueba: string;
+};
 
-    {/* Círculo indicador izquierdo */}
-    <View style={[styles.circulo, bloqueado && styles.circuloBloqueado]}>
-      {/* Indicador visual (número o estado) */}
-    </View>
+const extractCalificacion = (payload: unknown): number | null => {
+  if (!payload) return null;
 
-    {/* Contenido textual */}
-    <View style={styles.contenido}>
-      <Text style={[styles.subtitulo, bloqueado && styles.textoApagado]}>
-        {titulo}
-      </Text>
-      <Text style={[styles.descripcion, bloqueado && styles.textoApagado]}>
-        {descripcion}
-      </Text>
-    </View>
+  if (Array.isArray(payload) && payload.length > 0) {
+    const first = payload[0] as { calificacion?: number | string };
+    const value = Number(first?.calificacion);
+    return Number.isFinite(value) ? value : null;
+  }
 
-    {/* Ícono de estado derecho */}
-    <IconoEstado tipo={icono} />
+  if (typeof payload === "object") {
+    const maybeResult = payload as {
+      calificacion?: number | string;
+      resultado?: { calificacion?: number | string };
+      data?: { calificacion?: number | string };
+    };
 
-  </View>
-);
+    const direct = Number(maybeResult.calificacion);
+    if (Number.isFinite(direct)) return direct;
 
-// --- PANTALLA PRINCIPAL ---
-export default function TemasScreen() {
+    const nestedResultado = Number(maybeResult.resultado?.calificacion);
+    if (Number.isFinite(nestedResultado)) return nestedResultado;
+
+    const nestedData = Number(maybeResult.data?.calificacion);
+    if (Number.isFinite(nestedData)) return nestedData;
+  }
+
+  return null;
+};
+
+export default function PruebasScreen() {
+  const router = useRouter();
+  const { idTema, idAlumno } = useLocalSearchParams();
+
+  const [pruebas, setPruebas] = useState<Prueba[]>([]);
+  const [calificaciones, setCalificaciones] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const fetchPruebas = async () => {
+      try {
+        setLoading(true);
+        setErrorMessage("");
+
+        const response = await fetch("http://192.168.1.72:5125/api/pruebas");
+        const data = (await response.json()) as Prueba[];
+
+        if (!response.ok) {
+          const backendMessage =
+            (data as unknown as { message?: string })?.message ||
+            "No se pudieron cargar las pruebas.";
+          setErrorMessage(backendMessage);
+          setPruebas([]);
+          return;
+        }
+
+        const temaId = Number(idTema);
+        const filtered = Number.isFinite(temaId)
+          ? data.filter((item) => item.idTema === temaId)
+          : data;
+
+        const authUser = getAuthenticatedUser();
+        const fallbackAlumno = Number(idAlumno);
+        const alumnoId = authUser?.idUsuario || (Number.isFinite(fallbackAlumno) ? fallbackAlumno : null);
+
+        if (!alumnoId) {
+          const sinSesion = Object.fromEntries(
+            filtered.map((item) => [item.idPrueba, "Sin sesion"]) 
+          ) as Record<number, string>;
+          setCalificaciones(sinSesion);
+          setPruebas(filtered);
+          return;
+        }
+
+        const resultadoEntries = await Promise.all(
+          filtered.map(async (item) => {
+            try {
+              const res = await fetch(
+                `http://192.168.1.72:5125/api/resultados/alumno/${alumnoId}/prueba/${item.idPrueba}`
+              );
+
+              if (res.status === 404) {
+                return [item.idPrueba, "Sin calificacion"] as const;
+              }
+
+              const payload = (await res.json().catch(() => null)) as ResultadoApi | ResultadoApi[] | { data?: ResultadoApi } | null;
+
+              if (!res.ok || !payload) {
+                return [item.idPrueba, "Sin calificacion"] as const;
+              }
+
+              const calificacion = extractCalificacion(payload);
+
+              if (calificacion === null) {
+                return [item.idPrueba, "Sin calificacion"] as const;
+              }
+
+              return [item.idPrueba, `${calificacion.toFixed(2)}%`] as const;
+            } catch {
+              return [item.idPrueba, "Sin calificacion"] as const;
+            }
+          })
+        );
+
+        setCalificaciones(Object.fromEntries(resultadoEntries));
+        setPruebas(filtered);
+      } catch (error) {
+        console.error("Error al cargar pruebas:", error);
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Error de red al obtener pruebas."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPruebas();
+  }, [idTema, idAlumno]);
+
+  const onBack = () => router.back();
+
+  const onStart = (idPrueba: number) => {
+    const authUser = getAuthenticatedUser();
+    const fallbackAlumno = Number(idAlumno);
+    const alumnoId = authUser?.idUsuario || (Number.isFinite(fallbackAlumno) ? fallbackAlumno : undefined);
+
+    router.push({
+      pathname: "/(tabs)/formPruebas",
+      params: {
+        idPrueba: idPrueba.toString(),
+        ...(alumnoId ? { idAlumno: String(alumnoId) } : {}),
+      },
+    });
+  };
+
+  const temaNombre = pruebas[0]?.tema?.nombre || "Pruebas";
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centeredState}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={styles.stateText}>Cargando pruebas...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
-
-      {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.btnBack}>
+        <TouchableOpacity style={styles.btnBack} onPress={onBack}>
           <Text style={styles.btnBackTexto}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitulo}>El cuerpo humano</Text>
-        {/* Espaciador para centrar el título */}
+        <Text style={styles.headerTitulo}>{temaNombre}</Text>
         <View style={styles.headerEspaciador} />
       </View>
 
@@ -123,269 +200,185 @@ export default function TemasScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
 
-        {/* CARD PRINCIPAL DEL TEMA */}
-        <View style={styles.cardPrincipal}>
-          <View style={styles.cardFila}>
-
-            {/* Espacio para imagen del tema */}
-            <View style={styles.imagenPlaceholder}>
-              {/* Aquí va la imagen del tema */}
+        {pruebas.map((prueba) => (
+          <View key={prueba.idPrueba} style={styles.tarjeta}>
+            <View style={styles.circuloNumero}>
+              <Text style={styles.numeroTexto}>{prueba.idPrueba}</Text>
             </View>
 
-            {/* Texto descriptivo */}
-            <View style={styles.cardTexto}>
-              <Text style={styles.cardTitulo}>El cuerpo humano</Text>
-              <Text style={styles.cardDescripcion}>
-                Descubre cómo funciona tu cuerpo y la importancia del autocuidado.
+            <View style={styles.contenido}>
+              <Text style={styles.subtitulo}>{prueba.titulo}</Text>
+              <Text style={styles.descripcion}>
+                {prueba.preguntas?.length || 0} pregunta(s)
+              </Text>
+              <Text style={styles.calificacionText}>
+                Calificacion: {calificaciones[prueba.idPrueba] || "Cargando..."}
               </Text>
             </View>
 
+            <TouchableOpacity
+              style={styles.startBtn}
+              onPress={() => onStart(prueba.idPrueba)}
+            >
+              <Text style={styles.startBtnText}>Comenzar</Text>
+            </TouchableOpacity>
           </View>
+        ))}
 
-          {/* Barra de progreso decorativa */}
-          <View style={styles.barraFondo}>
-            <View style={styles.barraRelleno} />
-          </View>
-        </View>
-
-        {/* LISTA DE SUBTEMAS */}
-        <View style={styles.listaTemas}>
-          {subtemas.map((subtema) => (
-            <TarjetaSubtema
-              key={subtema.id}
-              titulo={subtema.titulo}
-              descripcion={subtema.descripcion}
-              icono={subtema.icono}
-              bloqueado={subtema.icono === 'candado'}
-            />
-          ))}
-        </View>
-
-        {/* ILUSTRACIÓN INFERIOR DECORATIVA */}
-        {/* Reemplaza este View por <Image source={require('...')} style={styles.ilustracionContainer} resizeMode="cover" /> */}
-        <View style={styles.ilustracionContainer}>
-          {/* Aquí va la ilustración inferior (decoración) */}
-        </View>
-
+        {pruebas.length === 0 && !errorMessage ? (
+          <Text style={styles.emptyText}>No hay pruebas para este tema.</Text>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-// --- ESTILOS ---
 const styles = StyleSheet.create({
-
-  // Contenedor principal
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: "#F3F4F6",
   },
 
-  // HEADER
+  centeredState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  stateText: {
+    color: "#6B7280",
+    fontSize: 14,
+  },
+
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
   },
+
   btnBack: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   btnBackTexto: {
     fontSize: 24,
-    color: '#374151',
+    color: "#374151",
     lineHeight: 28,
   },
+
   headerTitulo: {
     flex: 1,
     fontSize: 17,
-    fontWeight: '700',
-    color: '#111827',
-    textAlign: 'center',
+    fontWeight: "700",
+    color: "#111827",
+    textAlign: "center",
   },
+
   headerEspaciador: {
     width: 36,
   },
 
-  // SCROLL
   scroll: {
     flex: 1,
   },
+
   scrollContent: {
-    gap: 12,
+    gap: 10,
     paddingTop: 16,
     paddingHorizontal: 16,
-    paddingBottom: 0,
+    paddingBottom: 24,
   },
 
-  // CARD PRINCIPAL
-  cardPrincipal: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardFila: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
+  errorText: {
+    color: "#dc2626",
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 6,
   },
 
-  // Placeholder imagen principal
-  // Reemplaza por: <Image source={require('...')} style={styles.imagenPlaceholder} resizeMode="cover" />
-  imagenPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#F3F4F6',
-    flexShrink: 0,
-  },
-
-  cardTexto: {
-    flex: 1,
-    gap: 4,
-  },
-  cardTitulo: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  cardDescripcion: {
-    fontSize: 12,
-    color: '#6B7280',
-    lineHeight: 18,
-  },
-
-  // Barra de progreso decorativa
-  barraFondo: {
-    height: 5,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  barraRelleno: {
-    width: '75%',
-    height: '100%',
-    backgroundColor: '#7C3AED',
-    borderRadius: 10,
-  },
-
-  // LISTA SUBTEMAS
-  listaTemas: {
-    gap: 10,
-  },
-
-  // TARJETA SUBTEMA
   tarjeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     padding: 14,
     gap: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
-  tarjetaBloqueada: {
-    opacity: 0.6,
-  },
 
-  // Círculo indicador izquierdo
-  circulo: {
+  circuloNumero: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#EDE9FE',
+    backgroundColor: "#DBEAFE",
+    alignItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circuloBloqueado: {
-    backgroundColor: '#F3F4F6',
   },
 
-  // Texto subtema
+  numeroTexto: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1D4ED8",
+  },
+
   contenido: {
     flex: 1,
     gap: 2,
   },
+
   subtitulo: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
   },
+
   descripcion: {
     fontSize: 12,
-    color: '#6B7280',
+    color: "#6B7280",
     lineHeight: 17,
   },
-  textoApagado: {
-    color: '#9CA3AF',
+
+  calificacionText: {
+    fontSize: 12,
+    color: "#0f766e",
+    fontWeight: "700",
   },
 
-  // Íconos de estado
-  iconoCheck: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#22C55E',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  iconoCheckTexto: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  iconoFlecha: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  iconoFlechaTexto: {
-    color: '#6B7280',
-    fontSize: 22,
-    lineHeight: 26,
-  },
-  iconoCandado: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  iconoCandadoTexto: {
-    fontSize: 18,
+  startBtn: {
+    backgroundColor: "#3b82f6",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
 
-  // ILUSTRACIÓN INFERIOR
-  // Reemplaza por: <Image source={require('...')} style={styles.ilustracionContainer} resizeMode="cover" />
-  ilustracionContainer: {
-    width: '100%',
-    height: 130,
-    backgroundColor: '#D1FAE5',
-    marginTop: 4,
+  startBtnText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  emptyText: {
+    color: "#6B7280",
+    textAlign: "center",
+    marginTop: 12,
   },
 });

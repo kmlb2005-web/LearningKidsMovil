@@ -134,21 +134,47 @@ export default function FormPruebas() {
       return;
     }
 
+    const BASE = "http://192.168.1.72:5125/api/resultados";
+    const idAlumno = authUser.idUsuario;
+    const idPruebaNum = Number(idPrueba);
     const calificacion = parseFloat(
       ((score / questions.length) * 100).toFixed(2)
     );
+    const fecha = new Date().toISOString();
+    const headers = { "Content-Type": "application/json" };
+    const body = JSON.stringify({ idAlumno, idPrueba: idPruebaNum, calificacion, fecha });
 
     try {
-      const response = await fetch("http://192.168.1.72:5125/api/resultados", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idAlumno: authUser.idUsuario,
-          idPrueba: Number(idPrueba),
-          calificacion,
-          fecha: new Date().toISOString(),
-        }),
-      });
+      /* 1. Buscar si ya existe resultado para este alumno + prueba */
+      const getRes = await fetch(`${BASE}?idAlumno=${idAlumno}&idPrueba=${idPruebaNum}`);
+      const existing = await getRes.json().catch(() => null);
+
+      const record = Array.isArray(existing)
+        ? existing.find(
+            (r: { idAlumno: number; idPrueba: number; idResultado: number }) =>
+              r.idAlumno === idAlumno && r.idPrueba === idPruebaNum
+          )
+        : existing?.idResultado
+        ? existing
+        : null;
+
+      let response: Response;
+
+      if (record?.idResultado) {
+        /* 2a. Ya existe → PUT para actualizar */
+        response = await fetch(`${BASE}/${record.idResultado}`, {
+          method: "PUT",
+          headers,
+          body,
+        });
+      } else {
+        /* 2b. No existe → POST para crear */
+        response = await fetch(BASE, {
+          method: "POST",
+          headers,
+          body,
+        });
+      }
 
       const payload = await response.json().catch(() => null);
 
@@ -165,7 +191,11 @@ export default function FormPruebas() {
       }
 
       setSaveError(false);
-      setSaveMessage("Resultado guardado correctamente.");
+      setSaveMessage(
+        record?.idResultado
+          ? "Resultado actualizado correctamente."
+          : "Resultado guardado correctamente."
+      );
     } catch (error) {
       console.error("Error al guardar resultado:", error);
       setSaveError(true);
