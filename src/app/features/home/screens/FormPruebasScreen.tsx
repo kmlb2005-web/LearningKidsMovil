@@ -1,6 +1,8 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -8,24 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useLocalSearchParams, useRouter } from "expo-router";
-
 import { getAuthenticatedUser } from "../../../../shared/utils/authSession";
 
 /* ========= TYPES ========= */
-type ApiRespuesta = {
-  idRespuesta: number;
-  texto: string;
-  esCorrecta: boolean;
-};
-
-type ApiPregunta = {
-  idPregunta: number;
-  texto: string;
-  idPrueba: number;
-  respuestas: ApiRespuesta[];
-};
-
 type Question = {
   id: number;
   question: string;
@@ -33,43 +20,93 @@ type Question = {
   correct: number;
 };
 
-export default function FormPruebas() {
-  const { idPrueba } = useLocalSearchParams();
+type ApiOption = {
+  texto?: string;
+  esCorrecta?: boolean;
+};
+
+type ApiQuestion = {
+  idPregunta?: number;
+  id?: number;
+  texto?: string;
+  pregunta?: string;
+  opciones?: ApiOption[];
+  respuestas?: ApiOption[];
+};
+
+type ApiPrueba = {
+  titulo?: string;
+  preguntas?: ApiQuestion[];
+};
+
+async function safeReadJson<T>(response: Response): Promise<T | null> {
+  const text = await response.text();
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
+export default function PruebaScreen() {
+  const { idPrueba, idAlumno } = useLocalSearchParams<{
+    idPrueba?: string | string[];
+    idAlumno?: string | string[];
+  }>();
   const router = useRouter();
+  const pruebaId = Array.isArray(idPrueba) ? idPrueba[0] : idPrueba;
+  const alumnoIdParam = Array.isArray(idAlumno) ? idAlumno[0] : idAlumno;
 
-  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
+  const [title, setTitle] = useState("");
   const [answers, setAnswers] = useState<number[]>([]);
+  const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
-  const [saveMessage, setSaveMessage] = useState("");
-  const [saveError, setSaveError] = useState(false);
+  const [startTime, setStartTime] = useState(() => Date.now());
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   /* ========= FETCH ========= */
   useEffect(() => {
     const fetchData = async () => {
+      if (!pruebaId) {
+        setQuestions([]);
+        setLoading(false);
+        return;
+      }
+
       try {
+        // 🔥 1. traer prueba
         const res = await fetch(
-          "http://192.168.1.72:5125/api/preguntas"
+          `http://192.168.1.72:5125/api/pruebas/${pruebaId}`
         );
-        const data: ApiPregunta[] = await res.json();
+        if (!res.ok) {
+          throw new Error(`Error HTTP ${res.status} al cargar prueba`);
+        }
 
-        const filtradas = data.filter(
-          (p) => p.idPrueba === Number(idPrueba)
-        );
+        const data = await safeReadJson<ApiPrueba>(res);
+        if (!data) {
+          throw new Error("La API de prueba devolvio JSON vacio o invalido");
+        }
 
-        const mapped: Question[] = filtradas.map((p) => ({
-          id: p.idPregunta,
-          question: p.texto,
-          options: p.respuestas.map((r) => r.texto),
-          correct: p.respuestas.findIndex(
-            (r) => r.esCorrecta
-          ),
-        }));
+        setTitle(data.titulo || "Prueba");
 
-        setQuestions(mapped);
+        const questionsWithOptions: Question[] = (data.preguntas || []).map((p) => {
+          const optionsSource = p.opciones || p.respuestas || [];
+
+          return {
+            id: p.idPregunta ?? p.id ?? 0,
+            question: p.texto || p.pregunta || "",
+            options: optionsSource.map((r) => r.texto || ""),
+            correct: optionsSource.findIndex((r) => !!r.esCorrecta),
+          };
+        });
+
+        setQuestions(questionsWithOptions);
       } catch (error) {
         console.error("Error:", error);
       } finally {
@@ -78,9 +115,69 @@ export default function FormPruebas() {
     };
 
     fetchData();
-  }, [idPrueba]);
+  }, [pruebaId]);
 
-  /* ========= LOADING ========= */
+  /* ========= LOGIC ========= */
+  const handleNext = async () => {
+    if (selected === null) return;
+
+    const newAnswers = [...answers];
+    newAnswers[current] = selected;
+    setAnswers(newAnswers);
+
+    const isCorrect = selected === currentQuestion.correct;
+    const nextCorrectCount = isCorrect ? correctCount + 1 : correctCount;
+
+    if (isCorrect) {
+      setCorrectCount((prev) => prev + 1);
+    }
+
+    if (current < questions.length - 1) {
+      setCurrent(current + 1);
+      setSelected(null);
+    } else {
+      const endTime = Date.now();
+      const timeSeconds = Math.floor((endTime - startTime) / 1000);
+      const authUser = getAuthenticatedUser();
+      const fallbackAlumno = Number(alumnoIdParam);
+      const alumnoId = authUser?.idUsuario || (Number.isFinite(fallbackAlumno) ? fallbackAlumno : null);
+      const calificacion = Number(((nextCorrectCount / questions.length) * 100).toFixed(2));
+
+      setElapsedSeconds(timeSeconds);
+      setFinished(true);
+
+      try {
+        await fetch("http://192.168.1.72:5125/api/resultados", {
+          method: "POST",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            idPrueba: Number(pruebaId),
+            ...(alumnoId ? { idAlumno: alumnoId } : {}),
+            correctas: nextCorrectCount,
+            incorrectas: questions.length - nextCorrectCount,
+            tiempo: timeSeconds,
+            calificacion,
+          }),
+        });
+      } catch (err) {
+        console.log("Error guardando resultado", err);
+      }
+    }
+  };
+
+  const handleRetry = () => {
+    setAnswers([]);
+    setCorrectCount(0);
+    setFinished(false);
+    setCurrent(0);
+    setSelected(null);
+    setStartTime(Date.now());
+    setElapsedSeconds(0);
+  };
+
   if (loading) {
     return (
       <SafeAreaView edges={["top"]} style={styles.container}>
@@ -92,214 +189,210 @@ export default function FormPruebas() {
   if (questions.length === 0) {
     return (
       <SafeAreaView edges={["top"]} style={styles.container}>
-        <Text>No hay preguntas</Text>
+        <Text>No hay preguntas disponibles</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (finished) {
+    const total = questions.length;
+    const incorrect = total - correctCount;
+    const percent = Math.round((correctCount / total) * 100);
+
+    const formatTime = (sec: number) => {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m.toString().padStart(2, "0")}:${s
+        .toString()
+        .padStart(2, "0")}`;
+    };
+
+    return (
+      <SafeAreaView edges={["top"]} style={styles.container}>
+        <Text style={styles.resultTitle}>Resultados</Text>
+
+        <Image
+          source={require("../../../../../assets/images/Register/louz.png")}
+          style={styles.resultRobot}
+        />
+
+        <View style={styles.cardResult}>
+          <Text style={styles.resultMsg}>
+            ¡Muy bien! 🎉
+          </Text>
+
+          <Text style={styles.score}>
+            {correctCount} / {total}
+          </Text>
+
+          <Text style={styles.scoreLabel}>
+            Puntaje obtenido
+          </Text>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={[styles.statBox, { backgroundColor: "#dcfce7" }]}>
+            <Text style={{ color: "#16a34a" }}>Correctas</Text>
+            <Text style={styles.statValue}>{correctCount}</Text>
+          </View>
+
+          <View style={[styles.statBox, { backgroundColor: "#fee2e2" }]}>
+            <Text style={{ color: "#dc2626" }}>Incorrectas</Text>
+            <Text style={styles.statValue}>{incorrect}</Text>
+          </View>
+
+          <View style={[styles.statBox, { backgroundColor: "#ede9fe" }]}>
+            <Text style={{ color: "#7c3aed" }}>Tiempo</Text>
+            <Text style={styles.statValue}>
+              {formatTime(elapsedSeconds)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.performance}>
+          <Text>Desempeño</Text>
+          <View style={styles.progressContainer}>
+            <View
+              style={[
+                styles.progressBar,
+                { width: `${percent}%` },
+              ]}
+            />
+          </View>
+          <Text>{percent}%</Text>
+        </View>
+
+        <View style={[styles.robotBox, styles.resultRobotBox]}>
+          <Image
+            source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
+            style={[styles.robot, styles.resultLouz]}
+          />
+          <View style={[styles.bubble, styles.resultBubble]}>
+            <Text style={styles.bubbleText}>
+              Sigue practicando para mejorar aún más 🚀
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.btn, styles.resultActionBtn, styles.retryBtn]}
+          onPress={handleRetry}
+        >
+          <Text style={styles.secondaryBtnText}>
+            Volver a intentar
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.btn, styles.resultActionBtn, styles.backToTestsBtn]}
+          onPress={() => router.replace("/(tabs)/pruebas")}
+        >
+          <Text style={styles.btnText}>
+            Regresar a Pruebas
+          </Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
   const currentQuestion = questions[current];
+  const total = questions.length;
+  const progress = ((current + 1) / total) * 100;
 
-  /* ========= LOGICA ========= */
-  const handleNext = async () => {
-    if (selected === null) return;
+  const messages = [
+    "Lee con calma y elige tu mejor respuesta ✨",
+    "¡Vas muy bien! 🚀",
+    "Sigue así 💪",
+    "Confía en ti 🤖",
+    "Ya casi terminas 🎯",
+  ];
 
-    const newAnswers = [...answers, selected];
-    setAnswers(newAnswers);
-
-    if (current + 1 < questions.length) {
-      setCurrent(current + 1);
-      setSelected(null);
-    } else {
-      const correct = newAnswers.filter(
-        (ans, i) => ans === questions[i].correct
-      ).length;
-      await saveResult(correct);
-      setFinished(true);
-    }
-  };
-
-  const calculateScore = () => {
-    let correct = 0;
-    answers.forEach((ans, i) => {
-      if (ans === questions[i].correct) correct++;
-    });
-    return correct;
-  };
-
-  const saveResult = async (score: number) => {
-    const authUser = getAuthenticatedUser();
-
-    if (!authUser?.idUsuario) {
-      setSaveError(true);
-      setSaveMessage("No se encontro el usuario autenticado. Inicia sesion de nuevo.");
-      return;
-    }
-
-    const BASE = "http://192.168.1.72:5125/api/resultados";
-    const idAlumno = authUser.idUsuario;
-    const idPruebaNum = Number(idPrueba);
-    const calificacion = parseFloat(
-      ((score / questions.length) * 100).toFixed(2)
-    );
-    const fecha = new Date().toISOString();
-    const headers = { "Content-Type": "application/json" };
-    const body = JSON.stringify({ idAlumno, idPrueba: idPruebaNum, calificacion, fecha });
-
-    try {
-      /* 1. Buscar resultados de este alumno + prueba */
-      const getRes = await fetch(`${BASE}/alumno/${idAlumno}/prueba/${idPruebaNum}`);
-      const existing = await getRes.json().catch(() => null);
-
-      const record = Array.isArray(existing)
-        ? [...existing]
-            .filter(
-              (r: { idAlumno?: number; idPrueba?: number; idResultado?: number }) =>
-                r.idAlumno === idAlumno && r.idPrueba === idPruebaNum
-            )
-            .sort((a, b) => {
-              const aTime = a?.fecha ? new Date(a.fecha).getTime() : 0;
-              const bTime = b?.fecha ? new Date(b.fecha).getTime() : 0;
-
-              if (aTime !== bTime) {
-                return bTime - aTime;
-              }
-
-              return (b?.idResultado ?? 0) - (a?.idResultado ?? 0);
-            })[0] ?? null
-        : existing?.idResultado
-        ? existing
-        : null;
-
-      let response: Response;
-
-      if (record?.idResultado) {
-        /* 2a. Ya existe → PUT para actualizar */
-        response = await fetch(`${BASE}/${record.idResultado}`, {
-          method: "PUT",
-          headers,
-          body,
-        });
-      } else {
-        /* 2b. No existe → POST para crear */
-        response = await fetch(BASE, {
-          method: "POST",
-          headers,
-          body,
-        });
-      }
-
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        const backendMessage =
-          (payload && typeof payload === "object" && "message" in payload
-            ? String((payload as { message?: string }).message)
-            : "No se pudo guardar el resultado.") ||
-          "No se pudo guardar el resultado.";
-
-        setSaveError(true);
-        setSaveMessage(backendMessage);
-        return;
-      }
-
-      setSaveError(false);
-      setSaveMessage(
-        record?.idResultado
-          ? "Resultado actualizado correctamente."
-          : "Resultado guardado correctamente."
-      );
-    } catch (error) {
-      console.error("Error al guardar resultado:", error);
-      setSaveError(true);
-      setSaveMessage(
-        error instanceof Error
-          ? error.message
-          : "Error de red al guardar el resultado."
-      );
-    }
-  };
-
-  /* ========= RESULT ========= */
-  if (finished) {
-    const score = calculateScore();
-
-    return (
-      <SafeAreaView edges={["top"]} style={styles.container}>
-        <View style={styles.resultContainer}>
-          <Text style={styles.resultTitle}>
-            Resultado final
-          </Text>
-
-          <Text style={styles.score}>
-            {score} / {questions.length}
-          </Text>
-
-          <Text style={styles.subtitle}>
-            Puntaje obtenido
-          </Text>
-
-          {saveMessage ? (
-            <Text
-              style={[
-                styles.saveMessage,
-                saveError ? styles.saveMessageError : styles.saveMessageSuccess,
-              ]}
-            >
-              {saveMessage}
-            </Text>
-          ) : null}
-
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => {
-              setCurrent(0);
-              setAnswers([]);
-              setFinished(false);
-              setSelected(null);
-              setSaveMessage("");
-              setSaveError(false);
-            }}
-          >
-            <Text style={styles.btnText}>
-              Volver a intentar
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const msgIndex = current === 0
+    ? 0
+    : (Math.floor((current - 1) / 2) % (messages.length - 1)) + 1;
 
   /* ========= UI ========= */
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
-      {/* BACK BUTTON */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Text style={styles.backBtnText}>‹</Text>
-      </TouchableOpacity>
-      <View style={styles.content}>
-        <Text style={styles.progress}>
-          {current + 1} / {questions.length}
-        </Text>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.back}>←</Text>
+        </TouchableOpacity>
 
-        <Text style={styles.question}>
-          {currentQuestion.question}
-        </Text>
+        <Text style={styles.headerTitle}>{title}</Text>
 
-        {currentQuestion.options.map((opt, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.option,
-              selected === index && styles.optionSelected,
-            ]}
-            onPress={() => setSelected(index)}
-          >
-            <Text style={styles.optionText}>
-              {opt}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <Image
+          source={require("../../../../../assets/images/Register/louz.png")}
+          style={styles.headerRobot}
+        />
+      </View>
 
+      {/* PROGRESS */}
+      <View style={styles.progressContainer}>
+        <View
+          style={[styles.progressBar, { width: `${progress}%` }]}
+        />
+      </View>
+
+      {/* CONTADOR */}
+      <Text style={styles.counter}>
+        {current + 1} / {total}
+      </Text>
+
+      {/* PREGUNTA */}
+      <Text style={styles.question}>
+        {currentQuestion.question}
+      </Text>
+
+      {/* OPCIONES */}
+      <View style={styles.options}>
+        {currentQuestion.options.length === 0 ? (
+          <Text style={{ color: "#64748b" }}>
+            No hay respuestas disponibles
+          </Text>
+        ) : (
+          currentQuestion.options.map((opt, index) => {
+            const isSelected = selected === index;
+
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.option,
+                  isSelected && styles.optionSelected,
+                ]}
+                onPress={() => setSelected(index)}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    isSelected && styles.optionTextSelected,
+                  ]}
+                >
+                  {String.fromCharCode(65 + index)}. {opt}
+                </Text>
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </View>
+
+      {/* ROBOT MENSAJE */}
+      <View style={styles.robotBox}>
+        <Image
+          source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
+          style={styles.robot}
+        />
+        <View style={styles.bubble}>
+          <Text style={styles.bubbleText}>
+            {messages[msgIndex]}
+          </Text>
+        </View>
+      </View>
+
+      {/* BOTON */}
+      {currentQuestion.options.length > 0 && (
         <TouchableOpacity
           style={[
             styles.btn,
@@ -308,12 +401,12 @@ export default function FormPruebas() {
           onPress={handleNext}
         >
           <Text style={styles.btnText}>
-            {current === questions.length - 1
+            {current === total - 1
               ? "Finalizar"
-              : "Siguiente"}
+              : "Siguiente →"}
           </Text>
         </TouchableOpacity>
-      </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -323,33 +416,49 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#eef2f3",
+    padding: 16,
   },
 
-  backBtn: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 4,
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "#e2e8f0",
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-  },
-  backBtnText: {
-    fontSize: 24,
-    color: "#374151",
-    lineHeight: 28,
+    justifyContent: "space-between",
   },
 
-  content: {
-    padding: 20,
-    paddingBottom: 100,
+  back: {
+    fontSize: 22,
   },
 
-  progress: {
-    fontSize: 14,
-    color: "#64748b",
+  headerTitle: {
+    fontWeight: "700",
+    fontSize: 16,
+  },
+
+  headerRobot: {
+    width: 50,
+    height: 50,
+  },
+
+  progressContainer: {
+    height: 6,
+    backgroundColor: "#e5e7eb",
+    borderRadius: 10,
+    marginVertical: 12,
+  },
+
+  progressBar: {
+    height: "100%",
+    backgroundColor: "#22c55e",
+    borderRadius: 10,
+  },
+
+  counter: {
+    backgroundColor: "#3b82f6",
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    color: "#fff",
     marginBottom: 10,
   },
 
@@ -357,32 +466,66 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     marginBottom: 20,
-    color: "#1e293b",
+  },
+
+  options: {
+    gap: 10,
   },
 
   option: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     padding: 14,
-    borderRadius: 14,
-    marginBottom: 12,
+    borderRadius: 12,
+  },
+
+  optionText: {
+    fontWeight: "600",
   },
 
   optionSelected: {
+    backgroundColor: "#dbeafe",
     borderWidth: 2,
     borderColor: "#3b82f6",
   },
 
-  optionText: {
-    fontSize: 14,
-    color: "#1e293b",
+  optionTextSelected: {
+    color: "#1d4ed8",
+  },
+
+  robotBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+    marginLeft: -34,
+  },
+
+  robot: {
+    width: 228,
+    height: 228,
+  },
+
+  bubble: {
+    backgroundColor: "#dbeafe",
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginLeft: -18,
+    maxWidth: 230,
+    minWidth: 190,
+  },
+
+  bubbleText: {
+    color: "#1e3a8a",
+    fontSize: 16,
+    fontWeight: "700",
   },
 
   btn: {
     backgroundColor: "#3b82f6",
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
+    marginTop: 20,
     alignItems: "center",
-    marginTop: 10,
   },
 
   btnText: {
@@ -390,38 +533,100 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  resultContainer: {
-    alignItems: "center",
-  },
-
   resultTitle: {
     fontSize: 20,
-    fontWeight: "800",
-    marginBottom: 10,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  resultRobot: {
+    width: 120,
+    height: 120,
+    alignSelf: "center",
+    marginVertical: 10,
+  },
+
+  cardResult: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 20,
+    alignItems: "center",
+    marginVertical: 10,
+  },
+
+  resultMsg: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#2563eb",
   },
 
   score: {
-    fontSize: 40,
+    fontSize: 32,
     fontWeight: "800",
-    color: "#3b82f6",
+    color: "#2563eb",
   },
 
-  subtitle: {
+  scoreLabel: {
     color: "#64748b",
-    marginBottom: 20,
   },
 
-  saveMessage: {
-    textAlign: "center",
-    marginBottom: 12,
-    fontWeight: "600",
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 10,
   },
 
-  saveMessageError: {
-    color: "#dc2626",
+  statBox: {
+    flex: 1,
+    marginHorizontal: 4,
+    padding: 10,
+    borderRadius: 12,
+    alignItems: "center",
   },
 
-  saveMessageSuccess: {
-    color: "#16a34a",
+  statValue: {
+    fontWeight: "700",
+    fontSize: 16,
+  },
+
+  performance: {
+    marginVertical: 10,
+  },
+
+  resultRobotBox: {
+    marginTop: -18,
+    marginLeft: 0,
+  },
+
+  resultLouz: {
+    width: 150,
+    height: 150,
+  },
+
+  resultBubble: {
+    marginLeft: 10,
+    maxWidth: 200,
+    minWidth: 150,
+  },
+
+  resultActionBtn: {
+    marginTop: 10,
+    paddingVertical: 12,
+    borderWidth: 1,
+  },
+
+  retryBtn: {
+    backgroundColor: "#fef3c7",
+    borderColor: "#f59e0b",
+  },
+
+  backToTestsBtn: {
+    backgroundColor: "#2563eb",
+    borderColor: "#1d4ed8",
+  },
+
+  secondaryBtnText: {
+    color: "#92400e",
+    fontWeight: "700",
   },
 });

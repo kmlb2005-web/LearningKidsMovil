@@ -121,8 +121,11 @@ export default function PruebasScreen() {
     try {
       setLoading(true);
       setErrorMessage("");
+      const requestTs = Date.now();
 
-      const response = await fetch("http://192.168.1.72:5125/api/pruebas");
+      const response = await fetch(`http://192.168.1.72:5125/api/pruebas?ts=${requestTs}`, {
+        cache: "no-store",
+      });
       const data = (await response.json()) as Prueba[];
 
       if (!response.ok) {
@@ -152,11 +155,16 @@ export default function PruebasScreen() {
         return;
       }
 
+      setPruebas(filtered);
+
       const resultadoEntries = await Promise.all(
         filtered.map(async (item) => {
           try {
             const res = await fetch(
-              `http://192.168.1.72:5125/api/resultados/alumno/${alumnoId}/prueba/${item.idPrueba}`
+              `http://192.168.1.72:5125/api/resultados/alumno/${alumnoId}/prueba/${item.idPrueba}?ts=${requestTs}`,
+              {
+                cache: "no-store",
+              }
             );
 
             if (res.status === 404) {
@@ -183,7 +191,6 @@ export default function PruebasScreen() {
       );
 
       setCalificaciones(Object.fromEntries(resultadoEntries));
-      setPruebas(filtered);
     } catch (error) {
       console.error("Error al cargar pruebas:", error);
       setErrorMessage(

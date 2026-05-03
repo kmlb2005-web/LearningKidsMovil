@@ -1,17 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useRef, useState } from "react";
+import { useNavigation, useRouter } from "expo-router";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -19,229 +19,109 @@ type Mensaje = {
   id: string;
   texto: string;
   esLouz: boolean;
-  pasos?: string[];
-  resultado?: string;
-};
-
-type ChatSesion = {
-  id: string;
-  titulo: string;
-  mensajes: Mensaje[];
-  updatedAt: number;
-};
-
-const mensajesIniciales: Mensaje[] = [
-  {
-    id: "1",
-    texto: "¡Holaaa! Soy Louz, tu asistente académico personal, ¿en qué tienes duda?",
-    esLouz: true,
-  },
-];
-
-const respuestasRapidas = [
-  "Ver ejemplo",
-  "Explicar de nuevo",
-  "¿Cómo simplifico?",
-];
-
-const crearSesionInicial = (): ChatSesion => ({
-  id: Date.now().toString(),
-  titulo: "Nuevo chat",
-  mensajes: mensajesIniciales,
-  updatedAt: Date.now(),
-});
-
-const obtenerTituloChat = (mensajes: Mensaje[]) => {
-  const primerMensajeUsuario = mensajes.find((m) => !m.esLouz);
-  if (!primerMensajeUsuario) return "Nuevo chat";
-
-  const tituloBase = primerMensajeUsuario.texto.trim();
-  return tituloBase.length > 28 ? `${tituloBase.slice(0, 28)}...` : tituloBase;
 };
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
-  const [chats, setChats] = useState<ChatSesion[]>([crearSesionInicial()]);
-  const [chatActivoId, setChatActivoId] = useState(chats[0].id);
-  const [menuVisible, setMenuVisible] = useState(false);
-  const [texto, setTexto] = useState("");
-  const [cargando, setCargando] = useState(false);
+  const router = useRouter();
+  const navigation = useNavigation();
   const scrollRef = useRef<ScrollView>(null);
 
-  const chatActivo = chats.find((c) => c.id === chatActivoId) ?? chats[0];
-  const mensajes = chatActivo?.mensajes ?? mensajesIniciales;
+  useLayoutEffect(() => {
+    navigation.getParent()?.setOptions({
+      tabBarStyle: { display: "none" },
+    });
 
-  const generarRespuesta = (pregunta: string): Mensaje => {
-    const p = pregunta.toLowerCase();
-
-    if (p.includes("fraccion") || p.includes("fracción") || p.includes("/") || p.includes("division") || p.includes("división") || p.includes("dividir")) {
-      return {
-        id: Date.now().toString(),
-        texto: "¡Excelente ejemplo! Sigue estos pasos:",
-        esLouz: true,
-        pasos: [
-          "El truco de la X: Multiplicamos en cruz. El numerador de arriba (2) por el denominador de abajo (5).",
-          "¡El resultado va arriba! 2 × 5 = 10. Este es tu nuevo numerador.",
-          "Ahora el otro: Multiplicamos 3 × 4 = 12. Este va abajo.",
-        ],
-        resultado: "¡Tu resultado es 10/12!",
-      };
-    }
-
-    if (p.includes("suma") || p.includes("sumar") || p.includes("+")) {
-      return {
-        id: Date.now().toString(),
-        texto: "¡Claro que sí! Para sumar fracciones sigue estos pasos:",
-        esLouz: true,
-        pasos: [
-          "Primero verifica si los denominadores son iguales.",
-          "Si son iguales, solo suma los numeradores.",
-          "Si son distintos, encuentra el mínimo común múltiplo.",
-        ],
-        resultado: "¡Y listo! Simplifica si es posible.",
-      };
-    }
-
-    if (p.includes("multipli") || p.includes("×") || p.includes("*")) {
-      return {
-        id: Date.now().toString(),
-        texto: "¡La multiplicación es fácil! Te explico:",
-        esLouz: true,
-        pasos: [
-          "Multiplica numerador con numerador.",
-          "Multiplica denominador con denominador.",
-          "Simplifica el resultado si puedes.",
-        ],
-        resultado: "¡Así de sencillo! 🎉",
-      };
-    }
-
-    if (p.includes("no entiendo") || p.includes("ayuda") || p.includes("help")) {
-      return {
-        id: Date.now().toString(),
-        texto: "¡No te preocupes! Es más fácil de lo que parece. Dime, ¿cuál es el problema que quieres resolver? Puedes escribirme la operación y te guío paso a paso. 😊",
-        esLouz: true,
-      };
-    }
-
-    if (p.includes("hola") || p.includes("hi") || p.includes("buenas")) {
-      return {
-        id: Date.now().toString(),
-        texto: "¡Hola! 👋 Me alegra que estés aquí. ¿En qué materia necesitas ayuda hoy? Puedo ayudarte con matemáticas, ciencias, y mucho más.",
-        esLouz: true,
-      };
-    }
-
-    return {
-      id: Date.now().toString(),
-      texto: `¡Buena pregunta! Déjame ayudarte con "${pregunta}". ¿Puedes darme más detalles sobre tu duda? Mientras más específico seas, mejor te puedo explicar. 🤖`,
-      esLouz: true,
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: {
+          height: 70,
+          borderTopWidth: 0,
+          elevation: 10,
+        },
+      });
     };
-  };
+  }, []);
+
+  const mensajeInicial: Mensaje[] = [
+    {
+      id: "1",
+      texto:
+        "¡Holaaa! 👋 Soy Louz, tu asistente académico personal, ¿en qué tienes duda?",
+      esLouz: true,
+    },
+  ];
+
+  const [texto, setTexto] = useState("");
+  const [cargando, setCargando] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [mensajes, setMensajes] = useState<Mensaje[]>(mensajeInicial);
+  const [historial, setHistorial] = useState<string[]>([]);
+
+  const generarRespuesta = (pregunta: string): Mensaje => ({
+    id: Date.now().toString(),
+    texto: `¡Claro! Te ayudo con "${pregunta}". 😊`,
+    esLouz: true,
+  });
 
   const enviarMensaje = (msg?: string) => {
-    const mensajeTexto = msg || texto.trim();
-    if (!mensajeTexto) return;
+    const contenido = msg || texto.trim();
+    if (!contenido) return;
 
-    const chatObjetivoId = chatActivoId;
-
-    const nuevoMensaje: Mensaje = {
+    const nuevo: Mensaje = {
       id: Date.now().toString(),
-      texto: mensajeTexto,
+      texto: contenido,
       esLouz: false,
     };
 
-    setChats((prev) =>
-      prev.map((chat) => {
-        if (chat.id !== chatObjetivoId) return chat;
-        const mensajesActualizados = [...chat.mensajes, nuevoMensaje];
-        return {
-          ...chat,
-          mensajes: mensajesActualizados,
-          titulo: obtenerTituloChat(mensajesActualizados),
-          updatedAt: Date.now(),
-        };
-      })
-    );
+    setMensajes((prev) => [...prev, nuevo]);
+    setHistorial((prev) => [contenido, ...prev.slice(0, 9)]);
     setTexto("");
     setCargando(true);
 
     setTimeout(() => {
-      const respuesta = generarRespuesta(mensajeTexto);
-      setChats((prev) =>
-        prev.map((chat) => {
-          if (chat.id !== chatObjetivoId) return chat;
-          const mensajesActualizados = [...chat.mensajes, respuesta];
-          return {
-            ...chat,
-            mensajes: mensajesActualizados,
-            titulo: obtenerTituloChat(mensajesActualizados),
-            updatedAt: Date.now(),
-          };
-        })
-      );
+      const respuesta = generarRespuesta(contenido);
+      setMensajes((prev) => [...prev, respuesta]);
       setCargando(false);
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-    }, 1000);
 
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }, 900);
   };
 
-  const handleAjustes = () => {
-    Alert.alert(
-      "Ajustes del chat",
-      "¿Qué deseas hacer?",
-      [
-        {
-          text: "Borrar chat actual",
-          style: "destructive",
-          onPress: () => {
-            setChats((prev) =>
-              prev.map((chat) =>
-                chat.id === chatActivoId
-                  ? {
-                      ...chat,
-                      mensajes: mensajesIniciales,
-                      titulo: "Nuevo chat",
-                      updatedAt: Date.now(),
-                    }
-                  : chat
-              )
-            );
-          },
-        },
-        { text: "Cancelar", style: "cancel" },
-      ]
-    );
-  };
-
-  const crearNuevoChat = () => {
-    const nuevo = crearSesionInicial();
-    setChats((prev) => [nuevo, ...prev]);
-    setChatActivoId(nuevo.id);
+  const nuevoChat = () => {
+    setMensajes(mensajeInicial);
     setTexto("");
     setMenuVisible(false);
   };
 
-  const seleccionarChat = (id: string) => {
-    setChatActivoId(id);
-    setTexto("");
+  const irInicio = () => {
     setMenuVisible(false);
+    router.replace("/(tabs)/home");
   };
-
-  const chatsOrdenados = [...chats].sort((a, b) => b.updatedAt - a.updatedAt);
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={() => setMenuVisible(true)}>
-          <Ionicons name="menu" size={22} color="#1e293b" />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
+    >
+      <SafeAreaView style={styles.container}>
+        {/* HEADER */}
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+        <TouchableOpacity
+          style={styles.menuBtn}
+          onPress={() => setMenuVisible(true)}
+        >
+          <Ionicons name="menu" size={26} color="#2E7DFF" />
         </TouchableOpacity>
+
         <View style={styles.headerCenter}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarEmoji}>🤖</Text>
-          </View>
+          <Image
+            source={require("../../../../../assets/images/Chat/Louz2.png")}
+            style={styles.headerRobot}
+          />
           <View>
             <Text style={styles.headerName}>Louz</Text>
             <View style={styles.onlineRow}>
@@ -250,163 +130,113 @@ export default function ChatScreen() {
             </View>
           </View>
         </View>
-        <TouchableOpacity onPress={handleAjustes}>
-          <Ionicons name="settings-outline" size={22} color="#64748b" />
-        </TouchableOpacity>
-      </View>
-
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <View style={styles.drawerWrapper}>
-          <Pressable style={styles.drawerBackdrop} onPress={() => setMenuVisible(false)} />
-          <View style={[styles.drawerPanel, { paddingTop: insets.top + 18 }]}>
-            <Text style={styles.drawerTitle}>Historial de chats</Text>
-
-            <TouchableOpacity style={styles.newChatBtn} onPress={crearNuevoChat}>
-              <Ionicons name="add" size={18} color="#fff" />
-              <Text style={styles.newChatText}>Nuevo chat</Text>
-            </TouchableOpacity>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {chatsOrdenados.map((chat) => (
-                <TouchableOpacity
-                  key={chat.id}
-                  style={[
-                    styles.chatHistoryItem,
-                    chat.id === chatActivoId && styles.chatHistoryItemActive,
-                  ]}
-                  onPress={() => seleccionarChat(chat.id)}
-                >
-                  <Ionicons
-                    name="chatbubble-ellipses-outline"
-                    size={18}
-                    color={chat.id === chatActivoId ? "#2563eb" : "#64748b"}
-                  />
-                  <Text
-                    style={[
-                      styles.chatHistoryText,
-                      chat.id === chatActivoId && styles.chatHistoryTextActive,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {chat.titulo}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
         </View>
-      </Modal>
 
-      {/* Mensajes */}
-      <ScrollView
-        ref={scrollRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
-      >
+        {/* FONDO */}
+        <Image
+          source={require("../../../../../assets/images/Chat/fondo.png")}
+          style={styles.bg}
+        />
+
+        {/* MENSAJES */}
+        <ScrollView
+          ref={scrollRef}
+          style={styles.chatArea}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        >
         {mensajes.map((msg) => (
           <View
             key={msg.id}
             style={[
-              styles.msgRow,
-              msg.esLouz ? styles.msgRowLouz : styles.msgRowUser,
+              styles.row,
+              msg.esLouz ? styles.rowLeft : styles.rowRight,
             ]}
           >
             {msg.esLouz && (
-              <View style={styles.msgAvatar}>
-                <Text style={styles.avatarEmojiSmall}>🤖</Text>
-              </View>
+              <Image
+                source={require("../../../../../assets/images/Chat/Louz1.png")}
+                style={styles.msgAvatar}
+              />
             )}
-            <View style={styles.msgContent}>
-              <View
+
+            <View
+              style={[
+                styles.bubble,
+                msg.esLouz ? styles.botBubble : styles.userBubble,
+              ]}
+            >
+              <Text
                 style={[
-                  styles.bubble,
-                  msg.esLouz ? styles.bubbleLouz : styles.bubbleUser,
+                  styles.bubbleText,
+                  msg.esLouz ? styles.botText : styles.userText,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.bubbleText,
-                    msg.esLouz ? styles.bubbleTextLouz : styles.bubbleTextUser,
-                  ]}
-                >
-                  {msg.texto}
-                </Text>
-              </View>
-
-              {/* Pasos */}
-              {msg.pasos && msg.pasos.length > 0 && (
-                <View style={styles.pasosCard}>
-                  {msg.pasos.map((paso, i) => (
-                    <View key={i} style={styles.pasoRow}>
-                      <View style={styles.pasoNum}>
-                        <Text style={styles.pasoNumText}>{i + 1}</Text>
-                      </View>
-                      <Text style={styles.pasoText}>{paso}</Text>
-                    </View>
-                  ))}
-                  {msg.resultado && (
-                    <View style={styles.resultadoBox}>
-                      <Text style={styles.resultadoText}>{msg.resultado}</Text>
-                    </View>
-                  )}
-                </View>
-              )}
+                {msg.texto}
+              </Text>
             </View>
           </View>
         ))}
 
-        {/* Indicador de escritura */}
         {cargando && (
-          <View style={[styles.msgRow, styles.msgRowLouz]}>
-            <View style={styles.msgAvatar}>
-              <Text style={styles.avatarEmojiSmall}>🤖</Text>
-            </View>
-            <View style={[styles.bubble, styles.bubbleLouz]}>
+          <View style={styles.rowLeft}>
+            <Image
+              source={require("../../../../../assets/images/Chat/Louz1.png")}
+              style={styles.msgAvatar}
+            />
+            <View style={styles.botBubble}>
               <Text style={styles.typingText}>Escribiendo...</Text>
             </View>
           </View>
         )}
-      </ScrollView>
-
-      {/* Respuestas rápidas */}
-      <View style={styles.quickReplies}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {respuestasRapidas.map((r) => (
-            <TouchableOpacity
-              key={r}
-              style={styles.quickBtn}
-              onPress={() => enviarMensaje(r)}
-            >
-              <Text style={styles.quickBtnText}>{r}</Text>
-            </TouchableOpacity>
-          ))}
         </ScrollView>
-      </View>
 
-      {/* Input */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <View style={styles.inputArea}>
-          <View style={styles.inputRow}>
-            <TouchableOpacity style={styles.attachBtn}>
-              <Ionicons name="attach" size={20} color="#94a3b8" />
-            </TouchableOpacity>
+        {/* INPUT + BOTONES */}
+        <View
+          style={[
+            styles.bottomArea,
+            { paddingBottom: Math.max(insets.bottom, 12) },
+          ]}
+        >
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickRow}
+        >
+          <TouchableOpacity
+            style={styles.quickBtnBlue}
+            onPress={() => enviarMensaje("Ver ejemplo")}
+          >
+            <Ionicons name="search" size={18} color="#3B82F6" />
+            <Text style={styles.quickBlueText}>Ver ejemplo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickBtnPurple}
+            onPress={() => enviarMensaje("Explicar de nuevo")}
+          >
+            <Ionicons name="book" size={18} color="#A855F7" />
+            <Text style={styles.quickPurpleText}>Explicar de nuevo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickBtnGreen}
+            onPress={() => enviarMensaje("¿Cómo simplifico?")}
+          >
+            <Ionicons name="bulb" size={18} color="#22C55E" />
+            <Text style={styles.quickGreenText}>¿Cómo simplifico?</Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+          <View style={styles.inputWrap}>
             <TextInput
-              style={styles.textInput}
+              style={styles.input}
               placeholder="Escribe tu duda aquí..."
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor="#C0C4CC"
               value={texto}
               onChangeText={setTexto}
-              multiline
-              onSubmitEditing={() => enviarMensaje()}
             />
+
             <TouchableOpacity
               style={styles.sendBtn}
               onPress={() => enviarMensaje()}
@@ -415,305 +245,314 @@ export default function ChatScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </View>
+
+        {/* MENÚ */}
+        {menuVisible && (
+          <View style={styles.menuOverlay}>
+            <TouchableOpacity
+              style={styles.menuBg}
+              activeOpacity={1}
+              onPress={() => setMenuVisible(false)}
+            />
+
+            <View style={styles.menuBox}>
+              <TouchableOpacity style={styles.menuItem} onPress={nuevoChat}>
+                <Ionicons name="create-outline" size={22} color="#111" />
+                <Text style={styles.menuText}>Nuevo chat</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.menuItem} onPress={irInicio}>
+                <Ionicons name="home-outline" size={22} color="#111" />
+                <Text style={styles.menuText}>Ir al Inicio</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.historialTitle}>Historial</Text>
+
+              {historial.map((item, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.historialItem}
+                  onPress={() => {
+                    setMenuVisible(false);
+                    enviarMensaje(item);
+                  }}
+                >
+                  <Ionicons
+                    name="chatbubble-ellipses-outline"
+                    size={18}
+                    color="#64748b"
+                  />
+                  <Text style={styles.historialText}>{item}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f0f7ff",
+  container: { flex: 1, backgroundColor: "#EEF6FF" },
+
+  bg: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+    opacity: 0.22,
+    zIndex: -1,
   },
-  drawerWrapper: {
-    flex: 1,
-    flexDirection: "row",
-  },
-  drawerBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.35)",
-  },
-  drawerPanel: {
-    width: "78%",
-    maxWidth: 340,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  drawerTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0f172a",
-    marginBottom: 12,
-  },
-  newChatBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: "#3b82f6",
-    borderRadius: 12,
-    paddingVertical: 10,
-    marginBottom: 14,
-  },
-  newChatText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 14,
-  },
-  chatHistoryItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    marginBottom: 6,
-    backgroundColor: "#f8fafc",
-  },
-  chatHistoryItemActive: {
-    backgroundColor: "#dbeafe",
-  },
-  chatHistoryText: {
-    flex: 1,
-    color: "#334155",
-    fontSize: 13,
-    fontWeight: "500",
-  },
-  chatHistoryTextActive: {
-    color: "#1d4ed8",
-    fontWeight: "700",
-  },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 4,
   },
-  headerCenter: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    flex: 1,
-    marginLeft: 12,
-  },
-  avatarCircle: {
+
+  menuBtn: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "#dbeafe",
-    alignItems: "center",
+    backgroundColor: "#EFF6FF",
     justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
   },
-  avatarEmoji: {
-    fontSize: 24,
-  },
-  avatarEmojiSmall: {
-    fontSize: 18,
-  },
-  headerName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0f172a",
-  },
-  onlineRow: {
+
+  headerCenter: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    flex: 1,
   },
+
+  headerRobot: {
+    width: 48,
+    height: 48,
+    resizeMode: "contain",
+    marginRight: 10,
+  },
+
+  headerName: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#0f172a",
+  },
+
+  onlineRow: { flexDirection: "row", alignItems: "center" },
+
   onlineDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#22c55e",
+    marginRight: 5,
   },
+
   onlineText: {
-    fontSize: 12,
-    color: "#3b82f6",
-    fontWeight: "500",
+    color: "#16a34a",
+    fontWeight: "700",
+    fontSize: 13,
   },
-  messagesContainer: {
-    flex: 1,
+
+  menuOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+    elevation: 9999,
   },
-  messagesContent: {
-    padding: 16,
-    gap: 12,
+
+  menuBg: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0,0,0,0.20)",
   },
-  msgRow: {
+
+  menuBox: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: 270,
+    backgroundColor: "#fff",
+    paddingTop: 70,
+    paddingHorizontal: 18,
+    elevation: 100,
+    zIndex: 10000,
+  },
+
+  menuItem: {
     flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+  },
+
+  menuText: {
+    marginLeft: 12,
+    fontSize: 16,
+    color: "#111",
+  },
+
+  historialTitle: {
+    marginTop: 22,
+    marginBottom: 10,
+    color: "#64748b",
+    fontWeight: "bold",
+  },
+
+  historialItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+
+  historialText: {
+    marginLeft: 10,
+    color: "#111",
+    fontSize: 15,
+  },
+
+  chatArea: {
+    flex: 1,
+    paddingHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 140,
+  },
+
+  row: {
+    flexDirection: "row",
+    marginBottom: 14,
     alignItems: "flex-end",
-    gap: 8,
-    marginBottom: 4,
   },
-  msgRowLouz: {
-    justifyContent: "flex-start",
-  },
-  msgRowUser: {
-    justifyContent: "flex-end",
-    flexDirection: "row-reverse",
-  },
+
+  rowLeft: { justifyContent: "flex-start" },
+  rowRight: { justifyContent: "flex-end" },
+
   msgAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#dbeafe",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  msgContent: {
-    maxWidth: "78%",
-    gap: 8,
-  },
-  bubble: {
-    borderRadius: 18,
-    padding: 12,
-    paddingHorizontal: 14,
-  },
-  bubbleLouz: {
-    backgroundColor: "#fff",
-    borderBottomLeftRadius: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  bubbleUser: {
-    backgroundColor: "#5b8cdb",
-    borderBottomRightRadius: 4,
-  },
-  bubbleText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  bubbleTextLouz: {
-    color: "#1e293b",
-  },
-  bubbleTextUser: {
-    color: "#fff",
-  },
-  typingText: {
-    color: "#94a3b8",
-    fontSize: 13,
-    fontStyle: "italic",
-  },
-  pasosCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 14,
-    gap: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  pasoRow: {
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "flex-start",
-  },
-  pasoNum: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "#5b8cdb",
-    alignItems: "center",
-    justifyContent: "center",
-    flexShrink: 0,
-  },
-  pasoNumText: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  pasoText: {
-    flex: 1,
-    fontSize: 13,
-    color: "#334155",
-    lineHeight: 18,
-  },
-  resultadoBox: {
-    backgroundColor: "#f0fdf4",
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 4,
-    borderLeftWidth: 3,
-    borderLeftColor: "#22c55e",
-  },
-  resultadoText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#166534",
-    textAlign: "center",
-  },
-  quickReplies: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-  },
-  quickBtn: {
-    borderWidth: 1,
-    borderColor: "#5b8cdb",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    width: 38,
+    height: 38,
     marginRight: 8,
-    backgroundColor: "#eff6ff",
+    resizeMode: "contain",
   },
-  quickBtnText: {
-    fontSize: 13,
-    color: "#3b82f6",
-    fontWeight: "500",
+
+  bubble: {
+    maxWidth: "78%",
+    padding: 14,
+    borderRadius: 22,
   },
-  inputArea: {
+
+  botBubble: { backgroundColor: "#fff", elevation: 3 },
+  userBubble: { backgroundColor: "#4A86FF" },
+
+  bubbleText: { fontSize: 15, lineHeight: 22 },
+  botText: { color: "#1e293b" },
+  userText: { color: "#fff" },
+
+  typingText: { color: "#64748b", padding: 14 },
+
+  bottomArea: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "#fff",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    paddingBottom: Platform.OS === "ios" ? 20 : 12,
-    borderTopWidth: 1,
-    borderTopColor: "#f1f5f9",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 10,
+    elevation: 10,
   },
-  inputRow: {
+
+  quickRow: {
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+  },
+
+  quickBtnBlue: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
-    borderRadius: 24,
-    paddingHorizontal: 12,
+    borderWidth: 1.2,
+    borderColor: "#A7D3FF",
+    borderRadius: 26,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginRight: 8,
+    backgroundColor: "#F0F7FF",
+  },
+
+  quickBtnPurple: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.2,
+    borderColor: "#D8B4FE",
+    borderRadius: 26,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginRight: 8,
+    backgroundColor: "#FAF5FF",
+  },
+
+  quickBtnGreen: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.2,
+    borderColor: "#BBF7D0",
+    borderRadius: 26,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: "#F0FDF4",
+  },
+
+  quickBlueText: {
+    color: "#3B82F6",
+    fontWeight: "700",
+    marginLeft: 6,
+  },
+
+  quickPurpleText: {
+    color: "#A855F7",
+    fontWeight: "700",
+    marginLeft: 6,
+  },
+
+  quickGreenText: {
+    color: "#22C55E",
+    fontWeight: "700",
+    marginLeft: 6,
+  },
+
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 14,
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    paddingHorizontal: 10,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    gap: 8,
+    borderColor: "#EEF2F7",
+    elevation: 6,
   },
-  attachBtn: {
-    padding: 2,
-  },
-  textInput: {
+
+  input: {
     flex: 1,
-    fontSize: 14,
-    color: "#0f172a",
-    maxHeight: 80,
+    marginHorizontal: 10,
+    fontSize: 15,
+    color: "#111827",
   },
+
   sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#5b8cdb",
-    alignItems: "center",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#2f7dfa",
     justifyContent: "center",
+    alignItems: "center",
   },
 });

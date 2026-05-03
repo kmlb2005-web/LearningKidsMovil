@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   Image,
   SafeAreaView,
@@ -99,6 +100,23 @@ export default function CamposFormScreen() {
   }, []);
 
   const handlePress = (id: string, title: string) => {
+    const normalizedTitle = title
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+    const isUnavailableCampo =
+      normalizedTitle.includes("lenguajes") ||
+      normalizedTitle.includes("etica, naturaleza y sociedades") ||
+      normalizedTitle.includes("etica, naturaleza y sociedad") ||
+      normalizedTitle.includes("de lo humano y lo comunitario");
+
+    if (isUnavailableCampo) {
+      Alert.alert("Campo informativo no disponible");
+      return;
+    }
+
     router.push({
       pathname: "/(tabs)/proyectos",
       params: { idCampo: id, campoNombre: title },
@@ -183,14 +201,36 @@ export default function CamposFormScreen() {
     <SafeAreaView style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Image
-          source={require("../../../../../assets/images/CamposFormativos/fondo arriba.png")}
-          style={styles.bg}
-        />
+        <View pointerEvents="none" style={styles.headerCloudLayer}>
+          <Image
+            source={require("../../../../../assets/images/HomeScreen/Nube.png")}
+            style={[styles.headerCloud, { top: 10, left: 18, width: 78, height: 44, opacity: 0.45 }]}
+          />
+          <Image
+            source={require("../../../../../assets/images/HomeScreen/Nube.png")}
+            style={[styles.headerCloud, { top: 16, left: 110, width: 60, height: 34, opacity: 0.38 }]}
+          />
+          <Image
+            source={require("../../../../../assets/images/HomeScreen/Nube.png")}
+            style={[styles.headerCloud, { top: 12, right: 20, width: 72, height: 40, opacity: 0.42 }]}
+          />
+          <Image
+            source={require("../../../../../assets/images/HomeScreen/Nube.png")}
+            style={[styles.headerCloud, { top: 78, right: 118, width: 56, height: 32, opacity: 0.32 }]}
+          />
+          <Image
+            source={require("../../../../../assets/images/HomeScreen/Nube.png")}
+            style={[styles.headerCloud, { bottom: 26, left: 26, width: 68, height: 38, opacity: 0.36 }]}
+          />
+          <Image
+            source={require("../../../../../assets/images/HomeScreen/Nube.png")}
+            style={[styles.headerCloud, { bottom: 20, right: 28, width: 62, height: 35, opacity: 0.34 }]}
+          />
+        </View>
 
         <View style={styles.headerContent}>
           <Image
-            source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
+            source={require("../../../../../assets/images/HomeScreen/Louz1.png")}
             style={styles.louz}
           />
 
@@ -245,31 +285,41 @@ const styles = StyleSheet.create({
   },
 
   header: {
+    backgroundColor: "#EAF6FF",
+    borderBottomLeftRadius: 42,
+    borderBottomRightRadius: 42,
     height: 250,
     justifyContent: "flex-end",
-    marginTop: 0,
-  },
-
-  bg: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
+    marginTop: -30,
+    overflow: "hidden",
   },
 
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 70,
+    paddingBottom: 45,
     marginLeft: -15,
+    zIndex: 2,
+  },
+
+  headerCloudLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
+
+  headerCloud: {
+    position: "absolute",
+    resizeMode: "contain",
   },
 
   louz: {
     width: 200,
-    height: 130,
-    marginRight: 12,
-    marginTop: 10,
+    height: 150,
+    marginRight: 24,
+    marginTop: 0,
+    marginLeft: -20,
+    resizeMode: "contain",
   },
 
   title: {

@@ -5,6 +5,7 @@ import {
   Alert,
   Image,
   ImageBackground,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -12,10 +13,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
 export default function RegisterScreen() {
+  const scrollRef = React.useRef<ScrollView>(null);
   const router = useRouter();
 
   const [nombre, setNombre] = useState("");
@@ -24,6 +27,25 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
   const [genero, setGenero] = useState<"nino" | "nina" | null>(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
+
+  React.useEffect(() => {
+    const hideSub = Keyboard.addListener("keyboardDidHide", () => {
+      requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({ y: 0, animated: false });
+      });
+    });
+
+    return () => {
+      hideSub.remove();
+    };
+  }, []);
+
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    });
+  };
 
   const handleRegister = () => {
     if (!nombre || !apellidoInput || !emailInput || !password || !genero) {
@@ -49,8 +71,14 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.card}>
+        <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
+            <View style={styles.card}>
             <Text style={styles.title}>Crea tu Cuenta</Text>
             <Text style={styles.subtitle}>⭐ ¡Únete a la aventura! ⭐</Text>
 
@@ -178,8 +206,9 @@ export default function RegisterScreen() {
                 Inicia sesión
               </Text>
             </Text>
-          </View>
-        </ScrollView>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </ImageBackground>
   );

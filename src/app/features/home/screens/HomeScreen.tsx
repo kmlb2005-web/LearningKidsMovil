@@ -222,7 +222,7 @@ const HomeScreen = () => {
           </View>
 
           <Image
-            source={require("../../../../../assets/images/HomeScreen/corazón.png")}
+            source={require("../../../../../assets/images/HomeScreen/corazon.png")}
             style={styles.heart}
           />
         </View>
