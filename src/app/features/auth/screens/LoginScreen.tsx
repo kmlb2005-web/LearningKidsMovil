@@ -18,7 +18,8 @@ import {
   View,
 } from "react-native";
 
-  import { setAuthenticatedUser } from "../../../../shared/utils/authSession";
+import { buildApiEndpoints } from "../../../../shared/services/apiConfig";
+import { setAuthenticatedUser } from "../../../../shared/utils/authSession";
 
 type LoginResponse = {
   message?: string;
@@ -31,11 +32,7 @@ type LoginResponse = {
   };
 };
 
-const LOGIN_ENDPOINTS = [
-  "http://192.168.1.72:5125/api/usuarios/login/alumnos",
-  "http://10.0.2.2:5125/api/usuarios/login/alumnos",
-  "http://localhost:5125/api/usuarios/login/alumnos",
-];
+const LOGIN_ENDPOINTS = buildApiEndpoints("/api/usuarios/login/alumnos");
 
 export default function Index() {
   const scrollRef = React.useRef<ScrollView>(null);

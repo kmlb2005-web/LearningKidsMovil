@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { chatMath } from "../../../../shared/services/mathTutorApi";
 
 type Mensaje = {
   id: string;
@@ -58,13 +59,7 @@ export default function ChatScreen() {
   const [mensajes, setMensajes] = useState<Mensaje[]>(mensajeInicial);
   const [historial, setHistorial] = useState<string[]>([]);
 
-  const generarRespuesta = (pregunta: string): Mensaje => ({
-    id: Date.now().toString(),
-    texto: `¡Claro! Te ayudo con "${pregunta}". 😊`,
-    esLouz: true,
-  });
-
-  const enviarMensaje = (msg?: string) => {
+  const enviarMensaje = async (msg?: string) => {
     const contenido = msg || texto.trim();
     if (!contenido) return;
 
@@ -79,15 +74,27 @@ export default function ChatScreen() {
     setTexto("");
     setCargando(true);
 
-    setTimeout(() => {
-      const respuesta = generarRespuesta(contenido);
-      setMensajes((prev) => [...prev, respuesta]);
+    try {
+      const respuesta = await chatMath(contenido);
+      setMensajes((prev) => [
+        ...prev,
+        { id: Date.now().toString(), texto: respuesta.text, esLouz: true },
+      ]);
+    } catch (error) {
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          texto: "Ups, no pude conectarme con el tutor. Intenta de nuevo. 😅",
+          esLouz: true,
+        },
+      ]);
+    } finally {
       setCargando(false);
-
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 100);
-    }, 900);
+    }
   };
 
   const nuevoChat = () => {

@@ -73,11 +73,11 @@ export default function TemasScreen() {
   const proyectoDesc = temas[0]?.proyecto?.descripcion || "";
 
   const imagenesLocales = [
-    require("../../../../../assets/images_3/uno.png"),
-    require("../../../../../assets/images_3/dos.png"),
-    require("../../../../../assets/images_3/tres.png"),
-    require("../../../../../assets/images_3/cuatro.png"),
-    require("../../../../../assets/images_3/cinco.png"),
+    require("../../../../../assets/images/Chat/Flores.png"),
+    require("../../../../../assets/images/Chat/Estrellas.png"),
+    require("../../../../../assets/images/Chat/LibroRosa.png"),
+    require("../../../../../assets/images/Chat/Birrete.png"),
+    require("../../../../../assets/images/Chat/Foco.png"),
   ];
 
   const onPressTema = (id: number) => {
@@ -216,7 +216,7 @@ export default function TemasScreen() {
         {/* CARD PRINCIPAL (VISUAL DEL PRIMER CÓDIGO) */}
         <View style={styles.mainCard}>
           <Image
-            source={require("../../../../../assets/images_3/doctor.png")}
+            source={require("../../../../../assets/images/HomeScreen/Atomo.png")}
             style={styles.mainImage}
             resizeMode="cover"
           />

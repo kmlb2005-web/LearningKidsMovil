@@ -17,11 +17,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 /* IMÁGENES */
 const imagenesLocales = [
-  require('../../../../../assets/images_2/doctor.png'),
-  require('../../../../../assets/images_2/hoja.png'),
-  require('../../../../../assets/images_2/microscopio.png'),
-  require('../../../../../assets/images_2/cohete.png'),
-  require('../../../../../assets/images_2/rayo.png'),
+  require('../../../../../assets/images/HomeScreen/Atomo.png'),
+  require('../../../../../assets/images/CamposFormativos/SaberesyPensamientoCientifico.png'),
+  require('../../../../../assets/images/HomeScreen/Prueba.png'),
+  require('../../../../../assets/images/Chat/Foco.png'),
+  require('../../../../../assets/images/HomeScreen/Estrella.png'),
 ];
 
 type Proyecto = {
