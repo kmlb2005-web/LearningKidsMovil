@@ -251,12 +251,22 @@ export default function PruebasScreen() {
     const authUser = getAuthenticatedUser();
     const fallbackAlumno = Number(idAlumno);
     const alumnoId = authUser?.idUsuario || (Number.isFinite(fallbackAlumno) ? fallbackAlumno : undefined);
+    const pruebaActual = pruebas.find((item) => item.idPrueba === idPrueba);
+    const temaIdParam = String(idTema ?? "").trim();
+    const temaIdValue = temaIdParam || String(pruebaActual?.idTema ?? "").trim();
+    const proyectoIdValue = String(idProyecto ?? "").trim();
+    const campoIdValue = String(idCampo ?? "").trim();
+    const campoNombreValue = String(campoNombre ?? "").trim();
 
     router.push({
       pathname: "/(tabs)/formPruebas",
       params: {
         idPrueba: idPrueba.toString(),
         ...(alumnoId ? { idAlumno: String(alumnoId) } : {}),
+        ...(temaIdValue ? { idTema: temaIdValue } : {}),
+        ...(proyectoIdValue ? { idProyecto: proyectoIdValue } : {}),
+        ...(campoIdValue ? { idCampo: campoIdValue } : {}),
+        ...(campoNombreValue ? { campoNombre: campoNombreValue } : {}),
       },
     });
   };

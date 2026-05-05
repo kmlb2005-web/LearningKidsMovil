@@ -36,6 +36,7 @@ type ApiQuestion = {
 
 type ApiPrueba = {
   titulo?: string;
+  idTema?: number;
   preguntas?: ApiQuestion[];
 };
 
@@ -51,13 +52,21 @@ async function safeReadJson<T>(response: Response): Promise<T | null> {
 }
 
 export default function PruebaScreen() {
-  const { idPrueba, idAlumno } = useLocalSearchParams<{
+  const { idPrueba, idAlumno, idTema, idProyecto, idCampo, campoNombre } = useLocalSearchParams<{
     idPrueba?: string | string[];
     idAlumno?: string | string[];
+    idTema?: string | string[];
+    idProyecto?: string | string[];
+    idCampo?: string | string[];
+    campoNombre?: string | string[];
   }>();
   const router = useRouter();
   const pruebaId = Array.isArray(idPrueba) ? idPrueba[0] : idPrueba;
   const alumnoIdParam = Array.isArray(idAlumno) ? idAlumno[0] : idAlumno;
+  const idTemaParam = Array.isArray(idTema) ? idTema[0] : idTema;
+  const idProyectoParam = Array.isArray(idProyecto) ? idProyecto[0] : idProyecto;
+  const idCampoParam = Array.isArray(idCampo) ? idCampo[0] : idCampo;
+  const campoNombreParam = Array.isArray(campoNombre) ? campoNombre[0] : campoNombre;
 
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -69,6 +78,7 @@ export default function PruebaScreen() {
   const [finished, setFinished] = useState(false);
   const [startTime, setStartTime] = useState(() => Date.now());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [temaIdFromPrueba, setTemaIdFromPrueba] = useState<number | null>(null);
 
   /* ========= FETCH ========= */
   useEffect(() => {
@@ -94,6 +104,7 @@ export default function PruebaScreen() {
         }
 
         setTitle(data.titulo || "Prueba");
+        setTemaIdFromPrueba(Number.isFinite(Number(data.idTema)) ? Number(data.idTema) : null);
 
         const questionsWithOptions: Question[] = (data.preguntas || []).map((p) => {
           const optionsSource = p.opciones || p.respuestas || [];
@@ -207,6 +218,11 @@ export default function PruebaScreen() {
         .padStart(2, "0")}`;
     };
 
+    const temaIdValue = String(idTemaParam ?? "").trim() || (temaIdFromPrueba ? String(temaIdFromPrueba) : "");
+    const proyectoIdValue = String(idProyectoParam ?? "").trim();
+    const campoIdValue = String(idCampoParam ?? "").trim();
+    const campoNombreValue = String(campoNombreParam ?? "").trim();
+
     return (
       <SafeAreaView edges={["top"]} style={styles.container}>
         <Text style={styles.resultTitle}>Resultados</Text>
@@ -285,7 +301,18 @@ export default function PruebaScreen() {
 
         <TouchableOpacity
           style={[styles.btn, styles.resultActionBtn, styles.backToTestsBtn]}
-          onPress={() => router.replace("/(tabs)/pruebas")}
+          onPress={() =>
+            router.replace({
+              pathname: "/(tabs)/pruebas",
+              params: {
+                ...(temaIdValue ? { idTema: temaIdValue } : {}),
+                ...(alumnoIdParam ? { idAlumno: alumnoIdParam } : {}),
+                ...(proyectoIdValue ? { idProyecto: proyectoIdValue } : {}),
+                ...(campoIdValue ? { idCampo: campoIdValue } : {}),
+                ...(campoNombreValue ? { campoNombre: campoNombreValue } : {}),
+              },
+            })
+          }
         >
           <Text style={styles.btnText}>
             Regresar a Pruebas

@@ -4,12 +4,12 @@ import {
   Alert,
   Animated,
   Image,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRouter } from "expo-router";
 
@@ -191,14 +191,14 @@ export default function CamposFormScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView edges={["top"]} style={styles.container}>
         <ActivityIndicator size="large" color="#3b82f6" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView edges={["top"]} style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
         <View pointerEvents="none" style={styles.headerCloudLayer}>
@@ -290,7 +290,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 42,
     height: 250,
     justifyContent: "flex-end",
-    marginTop: -30,
     overflow: "hidden",
   },
 
