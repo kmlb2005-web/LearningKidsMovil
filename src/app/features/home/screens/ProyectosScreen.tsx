@@ -15,7 +15,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-/* IMÁGENES */
 const imagenesLocales = [
   require('../../../../../assets/images_2/doctor.png'),
   require('../../../../../assets/images_2/hoja.png'),
@@ -23,14 +22,12 @@ const imagenesLocales = [
   require('../../../../../assets/images_2/cohete.png'),
   require('../../../../../assets/images_2/rayo.png'),
 ];
-
 type Proyecto = {
   idProyecto: number;
   nombre: string;
   descripcion: string;
   idCampo: number;
 };
-
 const campoConfig: any = {
   1: { emoji: "🔬", color: "#dbeafe", labelColor: "#3b82f6" },
   4: { emoji: "📚", color: "#fef3c7", labelColor: "#f59e0b" },
@@ -39,7 +36,6 @@ const campoConfig: any = {
 };
 
 const fallbackConfig = { emoji: "✨", color: "#e2e8f0", labelColor: "#475569" };
-
 const getCampoConfig = (idCampoValue: unknown, campoNombreValue: unknown) => {
   if (typeof campoNombreValue === "string") {
     const nombre = campoNombreValue.toLowerCase();

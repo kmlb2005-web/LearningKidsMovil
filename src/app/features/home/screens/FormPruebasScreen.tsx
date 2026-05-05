@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   StyleSheet,
   Text,
@@ -9,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
+import { ScrollView } from "react-native";
 import { getAuthenticatedUser } from "../../../../shared/utils/authSession";
 
 /* ========= TYPES ========= */
@@ -90,25 +91,20 @@ export default function PruebaScreen() {
       }
 
       try {
-        // 🔥 1. traer prueba
         const res = await fetch(
           `http://192.168.1.72:5125/api/pruebas/${pruebaId}`
         );
         if (!res.ok) {
           throw new Error(`Error HTTP ${res.status} al cargar prueba`);
         }
-
         const data = await safeReadJson<ApiPrueba>(res);
         if (!data) {
           throw new Error("La API de prueba devolvio JSON vacio o invalido");
         }
-
         setTitle(data.titulo || "Prueba");
         setTemaIdFromPrueba(Number.isFinite(Number(data.idTema)) ? Number(data.idTema) : null);
-
         const questionsWithOptions: Question[] = (data.preguntas || []).map((p) => {
           const optionsSource = p.opciones || p.respuestas || [];
-
           return {
             id: p.idPregunta ?? p.id ?? 0,
             question: p.texto || p.pregunta || "",
@@ -142,7 +138,6 @@ export default function PruebaScreen() {
     if (isCorrect) {
       setCorrectCount((prev) => prev + 1);
     }
-
     if (current < questions.length - 1) {
       setCurrent(current + 1);
       setSelected(null);
@@ -153,10 +148,8 @@ export default function PruebaScreen() {
       const fallbackAlumno = Number(alumnoIdParam);
       const alumnoId = authUser?.idUsuario || (Number.isFinite(fallbackAlumno) ? fallbackAlumno : null);
       const calificacion = Number(((nextCorrectCount / questions.length) * 100).toFixed(2));
-
       setElapsedSeconds(timeSeconds);
       setFinished(true);
-
       try {
         await fetch("http://192.168.1.72:5125/api/resultados", {
           method: "POST",
@@ -225,6 +218,10 @@ export default function PruebaScreen() {
 
     return (
       <SafeAreaView edges={["top"]} style={styles.container}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 40 }}
+          showsVerticalScrollIndicator={false}
+        >
         <Text style={styles.resultTitle}>Resultados</Text>
 
         <Image
@@ -318,7 +315,8 @@ export default function PruebaScreen() {
             Regresar a Pruebas
           </Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </ScrollView>
+    </SafeAreaView>
     );
   }
 
@@ -339,11 +337,45 @@ export default function PruebaScreen() {
     : (Math.floor((current - 1) / 2) % (messages.length - 1)) + 1;
 
   /* ========= UI ========= */
+  // Handler para advertencia y navegación
+  const handleBackWithWarning = () => {
+    // Determinar el idTema a usar
+    const temaIdValue = String(idTemaParam ?? "").trim() || (temaIdFromPrueba ? String(temaIdFromPrueba) : "");
+    const alumnoIdValue = String(alumnoIdParam ?? "").trim();
+    const proyectoIdValue = String(idProyectoParam ?? "").trim();
+    const campoIdValue = String(idCampoParam ?? "").trim();
+    const campoNombreValue = String(campoNombreParam ?? "").trim();
+    Alert.alert(
+      "¿Estás seguro que quieres cancelar?",
+      "Si sales ahora, perderás tu progreso en la prueba.",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Sí, cancelar",
+          style: "destructive",
+          onPress: () => {
+            // Redirigir a PruebasScreen con idTema y otros params si existen
+            router.replace({
+              pathname: "/(tabs)/pruebas",
+              params: {
+                ...(temaIdValue ? { idTema: temaIdValue } : {}),
+                ...(alumnoIdValue ? { idAlumno: alumnoIdValue } : {}),
+                ...(proyectoIdValue ? { idProyecto: proyectoIdValue } : {}),
+                ...(campoIdValue ? { idCampo: campoIdValue } : {}),
+                ...(campoNombreValue ? { campoNombre: campoNombreValue } : {}),
+              },
+            });
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={handleBackWithWarning}>
           <Text style={styles.back}>←</Text>
         </TouchableOpacity>
 
@@ -405,19 +437,6 @@ export default function PruebaScreen() {
         )}
       </View>
 
-      {/* ROBOT MENSAJE */}
-      <View style={styles.robotBox}>
-        <Image
-          source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
-          style={styles.robot}
-        />
-        <View style={styles.bubble}>
-          <Text style={styles.bubbleText}>
-            {messages[msgIndex]}
-          </Text>
-        </View>
-      </View>
-
       {/* BOTON */}
       {currentQuestion.options.length > 0 && (
         <TouchableOpacity
@@ -434,6 +453,19 @@ export default function PruebaScreen() {
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* ROBOT MENSAJE */}
+      <View style={styles.robotBox}>
+        <Image
+          source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
+          style={styles.robot}
+        />
+        <View style={styles.bubble}>
+          <Text style={styles.bubbleText}>
+            {messages[msgIndex]}
+          </Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -522,13 +554,15 @@ const styles = StyleSheet.create({
   robotBox: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
-    marginLeft: -34,
+    marginTop: -10,   // lo sube un poco
+    alignSelf: "center",
+    flexShrink: 1,    // permite que se ajuste si hay mucha info
   },
 
   robot: {
-    width: 228,
-    height: 228,
+    width: 180,       // más compacto
+    height: 180,
+    resizeMode: "contain",
   },
 
   bubble: {
@@ -537,9 +571,9 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
     marginLeft: -18,
-    maxWidth: 230,
-    minWidth: 190,
+    maxWidth: "70%",   // se adapta al ancho disponible
   },
+
 
   bubbleText: {
     color: "#1e3a8a",

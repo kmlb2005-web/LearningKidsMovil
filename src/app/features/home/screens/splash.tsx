@@ -23,7 +23,6 @@ export default function SplashScreen() {
   const [msg, setMsg] = useState("Preparando tu aventura...");
 
   useEffect(() => {
-    // Entrada
     Animated.parallel([
       Animated.timing(fade, {
         toValue: 1,
@@ -37,7 +36,6 @@ export default function SplashScreen() {
       }),
     ]).start();
 
-    // 🤖 Animación del robot (idle)
     Animated.loop(
       Animated.sequence([
         Animated.timing(robotY, {
@@ -55,11 +53,9 @@ export default function SplashScreen() {
       ])
     ).start();
 
-    // ⏱️ Cambios de texto
     setTimeout(() => setMsg("Cargando contenido..."), 2000);
     setTimeout(() => setMsg("Casi listo... 🚀"), 4500);
 
-    // 📊 Barra (7 segundos)
     Animated.timing(progress, {
       toValue: 1,
       duration: 7000,
@@ -108,7 +104,6 @@ export default function SplashScreen() {
             ]}
           />
         </View>
-
         {/* Texto dinámico */}
         <Text style={styles.text}>{msg}</Text>
 
@@ -116,10 +111,8 @@ export default function SplashScreen() {
         <View style={styles.bar}>
           <Animated.View style={[styles.fill, { width: widthAnim }]} />
         </View>
-
         <Text style={styles.subText}>¡Ya casi! ✨</Text>
       </Animated.View>
-
       {/* Nubes */}
       <Image
         source={require("../../../../../assets/images/Splash/nubes.png")}

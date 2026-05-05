@@ -13,7 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRouter } from "expo-router";
 
-/* ========= TYPES ========= */
 type Field = {
   id: string;
   title: string;
@@ -32,8 +31,6 @@ export default function CamposFormScreen() {
   const cardPressAnimations = React.useRef<Record<string, Animated.Value>>({}).current;
   const [fields, setFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
-
-  /* 🔥 MAPEO POR NOMBRE */
   const getAsset = (name: string) => {
     const n = name.toLowerCase();
 
@@ -67,7 +64,6 @@ export default function CamposFormScreen() {
     };
   };
 
-  /* ========= FETCH ========= */
   useEffect(() => {
     const fetchFields = async () => {
       try {
