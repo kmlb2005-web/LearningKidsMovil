@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRouter } from "expo-router";
-import React, { useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "expo-router";
+import React, { useRef, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -26,24 +26,7 @@ type Mensaje = {
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const navigation = useNavigation();
   const scrollRef = useRef<ScrollView>(null);
-
-  useLayoutEffect(() => {
-    navigation.getParent()?.setOptions({
-      tabBarStyle: { display: "none" },
-    });
-
-    return () => {
-      navigation.getParent()?.setOptions({
-        tabBarStyle: {
-          height: 70,
-          borderTopWidth: 0,
-          elevation: 10,
-        },
-      });
-    };
-  }, []);
 
   const mensajeInicial: Mensaje[] = [
     {
@@ -112,7 +95,7 @@ export default function ChatScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior="padding"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 60 : 80}
     >
       <SafeAreaView style={styles.container}>

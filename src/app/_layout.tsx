@@ -66,7 +66,7 @@ export default function RootLayout() {
           {/* CHAT */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => router.push("/chatScreen")}
+            onPress={() => router.replace("/chatScreen")}
           >
             <Ionicons
               name="chatbubble-ellipses-outline"
@@ -81,7 +81,7 @@ export default function RootLayout() {
           {/* PRUEBAS */}
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => router.push("/campos")}
+            onPress={() => router.replace("/campos")}
           >
             <Ionicons
               name="clipboard-outline"
