@@ -1,8 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -23,6 +25,45 @@ type Mensaje = {
   esLouz: boolean;
 };
 
+const CHAT_CACHE_KEY = "learningkids_chat_cache_v1";
+const CHAT_STATE_KEY = "learningkids_chat_state_v1";
+
+function normalizeQuestion(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function sanitizeTutorText(text: string): string {
+  return text
+    .replace(/\\frac\{([^{}]+)\}\{([^{}]+)\}/g, "($1/$2)")
+    .replace(/\\sqrt\{([^{}]+)\}/g, "sqrt($1)")
+    .replace(/\\times/g, "x")
+    .replace(/\\cdot/g, "*")
+    .replace(/\\div/g, "/")
+    .replace(/\$\$/g, "")
+    .replace(/\$/g, "")
+    .replace(/\\n/g, "\n")
+    .trim();
+}
+
+function buildContextPrompt(messages: Mensaje[], currentQuestion: string): string {
+  const recent = messages.slice(-6);
+
+  if (recent.length === 0) {
+    return currentQuestion;
+  }
+
+  const context = recent
+    .map((item) => `${item.esLouz ? "Tutor" : "Alumno"}: ${item.texto}`)
+    .join("\n");
+
+  return `Contexto reciente:\n${context}\n\nPregunta actual del alumno: ${currentQuestion}`;
+}
+
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -42,10 +83,62 @@ export default function ChatScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [mensajes, setMensajes] = useState<Mensaje[]>(mensajeInicial);
   const [historial, setHistorial] = useState<string[]>([]);
+  const [responseCache, setResponseCache] = useState<Record<string, string>>({});
+
+  React.useEffect(() => {
+    const loadPersisted = async () => {
+      try {
+        const [cacheRaw, stateRaw] = await Promise.all([
+          AsyncStorage.getItem(CHAT_CACHE_KEY),
+          AsyncStorage.getItem(CHAT_STATE_KEY),
+        ]);
+
+        if (cacheRaw) {
+          setResponseCache(JSON.parse(cacheRaw) as Record<string, string>);
+        }
+
+        if (stateRaw) {
+          const parsed = JSON.parse(stateRaw) as {
+            mensajes?: Mensaje[];
+            historial?: string[];
+          };
+
+          if (parsed.mensajes && parsed.mensajes.length > 0) {
+            setMensajes(parsed.mensajes);
+          }
+
+          if (parsed.historial && parsed.historial.length > 0) {
+            setHistorial(parsed.historial.slice(0, 10));
+          }
+        }
+      } catch (error) {
+        console.log("No se pudo restaurar cache de chat", error);
+      }
+    };
+
+    loadPersisted();
+  }, []);
+
+  React.useEffect(() => {
+    AsyncStorage.setItem(CHAT_CACHE_KEY, JSON.stringify(responseCache)).catch(() => {
+      // No bloqueamos la conversación si falla persistencia.
+    });
+  }, [responseCache]);
+
+  React.useEffect(() => {
+    AsyncStorage.setItem(
+      CHAT_STATE_KEY,
+      JSON.stringify({ mensajes, historial: historial.slice(0, 10) })
+    ).catch(() => {
+      // No bloqueamos la conversación si falla persistencia.
+    });
+  }, [mensajes, historial]);
 
   const enviarMensaje = async (msg?: string) => {
     const contenido = msg || texto.trim();
     if (!contenido) return;
+
+    Keyboard.dismiss();
 
     const nuevo: Mensaje = {
       id: Date.now().toString(),
@@ -56,13 +149,37 @@ export default function ChatScreen() {
     setMensajes((prev) => [...prev, nuevo]);
     setHistorial((prev) => [contenido, ...prev.slice(0, 9)]);
     setTexto("");
+
+    const questionKey = normalizeQuestion(contenido);
+    const cachedResponse = responseCache[questionKey];
+
+    if (cachedResponse) {
+      setMensajes((prev) => [
+        ...prev,
+        { id: `${Date.now()}-cached`, texto: cachedResponse, esLouz: true },
+      ]);
+
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+      return;
+    }
+
     setCargando(true);
 
     try {
-      const respuesta = await chatMath(contenido);
+      const contextualPrompt = buildContextPrompt(mensajes, contenido);
+      const respuesta = await chatMath(contextualPrompt);
+      const normalizedText = sanitizeTutorText(respuesta.text);
+
+      setResponseCache((prev) => ({
+        ...prev,
+        [questionKey]: normalizedText,
+      }));
+
       setMensajes((prev) => [
         ...prev,
-        { id: Date.now().toString(), texto: respuesta.text, esLouz: true },
+        { id: Date.now().toString(), texto: normalizedText, esLouz: true },
       ]);
     } catch (error) {
       setMensajes((prev) => [
@@ -84,7 +201,12 @@ export default function ChatScreen() {
   const nuevoChat = () => {
     setMensajes(mensajeInicial);
     setTexto("");
+    setHistorial([]);
     setMenuVisible(false);
+
+    AsyncStorage.removeItem(CHAT_STATE_KEY).catch(() => {
+      // Ignorado: no afecta funcionalidad principal.
+    });
   };
 
   const irInicio = () => {
@@ -134,6 +256,8 @@ export default function ChatScreen() {
           ref={scrollRef}
           style={styles.chatArea}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           contentContainerStyle={{ paddingBottom: 20 }}
         >
         {mensajes.map((msg) => (
@@ -225,6 +349,9 @@ export default function ChatScreen() {
               placeholderTextColor="#C0C4CC"
               value={texto}
               onChangeText={setTexto}
+              returnKeyType="send"
+              blurOnSubmit
+              onSubmitEditing={() => enviarMensaje()}
             />
 
             <TouchableOpacity

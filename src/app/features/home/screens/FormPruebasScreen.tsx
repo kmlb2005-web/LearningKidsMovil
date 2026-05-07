@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { fetchWithHostFallback } from "../../../../shared/services/apiHttp";
 import { getAuthenticatedUser } from "../../../../shared/utils/authSession";
 
 /* ========= TYPES ========= */
@@ -51,13 +53,15 @@ async function safeReadJson<T>(response: Response): Promise<T | null> {
 }
 
 export default function PruebaScreen() {
-  const { idPrueba, idAlumno } = useLocalSearchParams<{
+  const { idPrueba, idAlumno, intento } = useLocalSearchParams<{
     idPrueba?: string | string[];
     idAlumno?: string | string[];
+    intento?: string | string[];
   }>();
   const router = useRouter();
   const pruebaId = Array.isArray(idPrueba) ? idPrueba[0] : idPrueba;
   const alumnoIdParam = Array.isArray(idAlumno) ? idAlumno[0] : idAlumno;
+  const intentoParam = Array.isArray(intento) ? intento[0] : intento;
 
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -80,10 +84,17 @@ export default function PruebaScreen() {
       }
 
       try {
+        setFinished(false);
+        setCurrent(0);
+        setSelected(null);
+        setAnswers([]);
+        setCorrectCount(0);
+        setElapsedSeconds(0);
+        setStartTime(Date.now());
+        setLoading(true);
+
         // 🔥 1. traer prueba
-        const res = await fetch(
-          `http://192.168.1.72:5125/api/pruebas/${pruebaId}`
-        );
+        const res = await fetchWithHostFallback(`/api/pruebas/${pruebaId}`);
         if (!res.ok) {
           throw new Error(`Error HTTP ${res.status} al cargar prueba`);
         }
@@ -115,7 +126,7 @@ export default function PruebaScreen() {
     };
 
     fetchData();
-  }, [pruebaId]);
+  }, [pruebaId, intentoParam]);
 
   /* ========= LOGIC ========= */
   const handleNext = async () => {
@@ -147,7 +158,7 @@ export default function PruebaScreen() {
       setFinished(true);
 
       try {
-        await fetch("http://192.168.1.72:5125/api/resultados", {
+        await fetchWithHostFallback("/api/resultados", {
           method: "POST",
           cache: "no-store",
           headers: {
@@ -340,64 +351,70 @@ export default function PruebaScreen() {
         {current + 1} / {total}
       </Text>
 
-      {/* PREGUNTA */}
-      <Text style={styles.question}>
-        {currentQuestion.question}
-      </Text>
+      <ScrollView
+        style={styles.questionScroll}
+        contentContainerStyle={styles.questionContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* PREGUNTA */}
+        <Text style={styles.question}>
+          {currentQuestion.question}
+        </Text>
 
-      {/* OPCIONES */}
-      <View style={styles.options}>
-        {currentQuestion.options.length === 0 ? (
-          <Text style={{ color: "#64748b" }}>
-            No hay respuestas disponibles
-          </Text>
-        ) : (
-          currentQuestion.options.map((opt, index) => {
-            const isSelected = selected === index;
+        {/* OPCIONES */}
+        <View style={styles.options}>
+          {currentQuestion.options.length === 0 ? (
+            <Text style={{ color: "#64748b" }}>
+              No hay respuestas disponibles
+            </Text>
+          ) : (
+            currentQuestion.options.map((opt, index) => {
+              const isSelected = selected === index;
 
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.option,
-                  isSelected && styles.optionSelected,
-                ]}
-                onPress={() => setSelected(index)}
-              >
-                <Text
+              return (
+                <TouchableOpacity
+                  key={index}
                   style={[
-                    styles.optionText,
-                    isSelected && styles.optionTextSelected,
+                    styles.option,
+                    isSelected && styles.optionSelected,
                   ]}
+                  onPress={() => setSelected(index)}
                 >
-                  {String.fromCharCode(65 + index)}. {opt}
-                </Text>
-              </TouchableOpacity>
-            );
-          })
-        )}
-      </View>
-
-      {/* ROBOT MENSAJE */}
-      <View style={styles.robotBox}>
-        <Image
-          source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
-          style={styles.robot}
-        />
-        <View style={styles.bubble}>
-          <Text style={styles.bubbleText}>
-            {messages[msgIndex]}
-          </Text>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      isSelected && styles.optionTextSelected,
+                    ]}
+                  >
+                    {String.fromCharCode(65 + index)}. {opt}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
-      </View>
+
+        {/* ROBOT MENSAJE */}
+        <View style={styles.robotBox}>
+          <Image
+            source={require("../../../../../assets/images/CamposFormativos/louzSaludando.png")}
+            style={styles.robot}
+          />
+          <View style={styles.bubble}>
+            <Text style={styles.bubbleText}>{messages[msgIndex]}</Text>
+          </View>
+        </View>
+      </ScrollView>
 
       {/* BOTON */}
       {currentQuestion.options.length > 0 && (
         <TouchableOpacity
           style={[
             styles.btn,
+            styles.btnFloating,
             selected === null && { opacity: 0.5 },
           ]}
+          disabled={selected === null}
           onPress={handleNext}
         >
           <Text style={styles.btnText}>
@@ -465,7 +482,15 @@ const styles = StyleSheet.create({
   question: {
     fontSize: 18,
     fontWeight: "700",
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+
+  questionScroll: {
+    flex: 1,
+  },
+
+  questionContent: {
+    paddingBottom: 210,
   },
 
   options: {
@@ -495,28 +520,28 @@ const styles = StyleSheet.create({
   robotBox: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
-    marginLeft: -34,
+    marginTop: 8,
+    marginLeft: -10,
   },
 
   robot: {
-    width: 228,
-    height: 228,
+    width: 118,
+    height: 118,
   },
 
   bubble: {
     backgroundColor: "#dbeafe",
-    paddingHorizontal: 9,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 10,
-    marginLeft: -18,
-    maxWidth: 230,
-    minWidth: 190,
+    marginLeft: -4,
+    maxWidth: 180,
+    minWidth: 120,
   },
 
   bubbleText: {
     color: "#1e3a8a",
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "700",
   },
 
@@ -524,8 +549,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#3b82f6",
     padding: 14,
     borderRadius: 16,
-    marginTop: 20,
     alignItems: "center",
+  },
+
+  btnFloating: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 86,
   },
 
   btnText: {

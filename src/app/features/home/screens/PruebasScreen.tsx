@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { fetchWithHostFallback } from "../../../../shared/services/apiHttp";
 import { getAuthenticatedUser } from "../../../../shared/utils/authSession";
 
 type Prueba = {
@@ -122,8 +123,9 @@ export default function PruebasScreen() {
       setLoading(true);
       setErrorMessage("");
       const requestTs = Date.now();
+      const pruebasPath = `/api/pruebas?ts=${requestTs}`;
 
-      const response = await fetch(`http://192.168.1.72:5125/api/pruebas?ts=${requestTs}`, {
+      const response = await fetchWithHostFallback(pruebasPath, {
         cache: "no-store",
       });
       const data = (await response.json()) as Prueba[];
@@ -160,12 +162,10 @@ export default function PruebasScreen() {
       const resultadoEntries = await Promise.all(
         filtered.map(async (item) => {
           try {
-            const res = await fetch(
-              `http://192.168.1.72:5125/api/resultados/alumno/${alumnoId}/prueba/${item.idPrueba}?ts=${requestTs}`,
-              {
-                cache: "no-store",
-              }
-            );
+            const resultadosPath = `/api/resultados/alumno/${alumnoId}/prueba/${item.idPrueba}?ts=${requestTs}`;
+            const res = await fetchWithHostFallback(resultadosPath, {
+              cache: "no-store",
+            });
 
             if (res.status === 404) {
               return [item.idPrueba, "Sin calificacion"] as const;
@@ -256,6 +256,7 @@ export default function PruebasScreen() {
       pathname: "/(tabs)/formPruebas",
       params: {
         idPrueba: idPrueba.toString(),
+        intento: Date.now().toString(),
         ...(alumnoId ? { idAlumno: String(alumnoId) } : {}),
       },
     });

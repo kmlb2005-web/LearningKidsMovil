@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Image,
   SafeAreaView,
@@ -12,6 +11,7 @@ import {
 } from "react-native";
 
 import { useRouter } from "expo-router";
+import { fetchWithHostFallback } from "../../../../shared/services/apiHttp";
 
 /* ========= TYPES ========= */
 type Field = {
@@ -37,12 +37,6 @@ export default function CamposFormScreen() {
   const getAsset = (name: string) => {
     const n = name.toLowerCase();
 
-    if (n.includes("cientifico") || n.includes("científico"))
-      return {
-        image: require("../../../../../assets/images/CamposFormativos/SaberesyPensamientoCientifico.png"),
-        color: "#8b5cf6",
-      };
-
     if (n.includes("lenguaje"))
       return {
         image: require("../../../../../assets/images/CamposFormativos/Lenguajes.png"),
@@ -61,6 +55,12 @@ export default function CamposFormScreen() {
         color: "#3b82f6",
       };
 
+    if (n.includes("cientifico") || n.includes("científico"))
+      return {
+        image: require("../../../../../assets/images/CamposFormativos/SaberesyPensamientoCientifico.png"),
+        color: "#8b5cf6",
+      };
+
     return {
       image: null,
       color: "#8b5cf6",
@@ -71,9 +71,7 @@ export default function CamposFormScreen() {
   useEffect(() => {
     const fetchFields = async () => {
       try {
-        const res = await fetch(
-          "http://192.168.1.72:5125/api/camposFormativos"
-        );
+        const res = await fetchWithHostFallback("/api/camposFormativos");
         const data: ApiField[] = await res.json();
 
         const mapped: Field[] = data.map((item) => {
@@ -100,23 +98,6 @@ export default function CamposFormScreen() {
   }, []);
 
   const handlePress = (id: string, title: string) => {
-    const normalizedTitle = title
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-
-    const isUnavailableCampo =
-      normalizedTitle.includes("lenguajes") ||
-      normalizedTitle.includes("etica, naturaleza y sociedades") ||
-      normalizedTitle.includes("etica, naturaleza y sociedad") ||
-      normalizedTitle.includes("de lo humano y lo comunitario");
-
-    if (isUnavailableCampo) {
-      Alert.alert("Campo informativo no disponible");
-      return;
-    }
-
     router.push({
       pathname: "/(tabs)/proyectos",
       params: { idCampo: id, campoNombre: title },

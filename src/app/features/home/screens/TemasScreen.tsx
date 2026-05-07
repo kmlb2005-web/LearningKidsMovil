@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { fetchWithHostFallback } from "../../../../shared/services/apiHttp";
 
 type Tema = {
   idTema: number;
@@ -37,7 +38,7 @@ export default function TemasScreen() {
   useEffect(() => {
     const fetchTemas = async () => {
       try {
-        const res = await fetch("http://192.168.1.72:5125/api/temas");
+        const res = await fetchWithHostFallback("/api/temas");
         const data: Tema[] = await res.json();
 
         const filtrados = data.filter(
