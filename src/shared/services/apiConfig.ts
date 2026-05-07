@@ -4,8 +4,9 @@ function normalizeBaseUrl(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-// Priority order: explicit env var, Android emulator, web localhost, local LAN.
+// Priority order: explicit env var, public EC2 backend, Android emulator, web localhost, local LAN.
 const DEFAULT_API_BASE_URLS = [
+  "http://3.137.209.113:5125",
   "http://10.0.2.2:5125",
   "http://localhost:5125",
   "http://192.168.1.72:5125",
