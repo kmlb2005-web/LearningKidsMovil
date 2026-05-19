@@ -22,13 +22,18 @@ type Prueba = {
   titulo: string;
   idTema: number;
   creadoPor: number;
-  tema?: {
+
+  Tema?: {
     idTema: number;
     nombre: string;
     descripcion: string;
     idProyecto: number;
   } | null;
-  preguntas: Array<{ idPregunta: number; texto: string }>;
+
+  Preguntas: Array<{
+    idPregunta: number;
+    texto: string;
+  }>;
 };
 
 type ResultadoApi = {
@@ -139,11 +144,27 @@ export default function PruebasScreen() {
         return;
       }
 
-      const temaId = Number(idTema);
-      const filtered = Number.isFinite(temaId)
-        ? data.filter((item) => item.idTema === temaId)
-        : data;
+      const temaId = Number(
+        Array.isArray(idTema) ? idTema[0] : idTema
+      );
 
+      
+      const filtered = data.filter(
+        (item) => Number(item.idTema) === Number(temaId)
+      );
+
+      console.log("PARAM idTema:", idTema);
+      console.log("temaId:", temaId);
+
+      console.log(
+        "API pruebas:",
+        data.map((x) => ({
+          titulo: x.titulo,
+          idTema: x.idTema,
+        }))
+      );
+
+      console.log("FILTERED:", filtered);
       const authUser = getAuthenticatedUser();
       const fallbackAlumno = Number(idAlumno);
       const alumnoId = authUser?.idUsuario || (Number.isFinite(fallbackAlumno) ? fallbackAlumno : null);
@@ -229,7 +250,7 @@ export default function PruebasScreen() {
       return;
     }
 
-    const proyectoId = pruebas[0]?.tema?.idProyecto;
+    const proyectoId = pruebas[0]?.Tema?.idProyecto;
 
     if (proyectoId) {
       router.replace({
@@ -262,7 +283,7 @@ export default function PruebasScreen() {
     });
   };
 
-  const temaNombre = pruebas[0]?.tema?.nombre || "Pruebas";
+  const temaNombre = pruebas[0]?.Tema?.nombre || "Pruebas";
 
   const getPressAnimation = (key: string) => {
     if (!pressAnimations[key]) {
@@ -419,7 +440,7 @@ export default function PruebasScreen() {
                 <View style={styles.contenido}>
                   <Text style={styles.subtitulo}>{prueba.titulo}</Text>
                   <Text style={styles.descripcion}>
-                    {prueba.preguntas?.length || 0} preguntas
+                    {prueba.Preguntas?.length || 0} preguntas
                   </Text>
                 </View>
 

@@ -82,6 +82,9 @@ export default function TemasScreen() {
   ];
 
   const onPressTema = (id: number) => {
+    console.log("TEMA PRESIONADO");
+    console.log("idTema enviado:", id);
+
     router.push({
       pathname: "/(tabs)/pruebas",
       params: {
@@ -183,6 +186,13 @@ export default function TemasScreen() {
   const onPressBack = () => {
     handleCardPress("temas-back", handleBackNavigation);
   };
+  console.log(
+    "TEMAS API:",
+    temas.map((x) => ({
+      idTema: x.idTema,
+      nombre: x.nombre,
+    }))
+  );
 
   return (
     <ImageBackground

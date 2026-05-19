@@ -6,9 +6,10 @@ function normalizeBaseUrl(url: string): string {
 
 // Priority order: explicit env var, Android emulator, web localhost, local LAN.
 const DEFAULT_API_BASE_URLS = [
+  "http://192.168.1.72:5125",
   "http://10.0.2.2:5125",
   "http://localhost:5125",
-  "http://192.168.1.72:5125",
+  
 ];
 
 export function getApiBaseUrls(): string[] {
