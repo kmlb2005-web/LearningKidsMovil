@@ -1,3 +1,4 @@
+import { apiUrl } from "../../../../shared/services/apiConfig";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -37,7 +38,7 @@ export default function TemasScreen() {
   useEffect(() => {
     const fetchTemas = async () => {
       try {
-        const res = await fetch("http://192.168.1.72:5125/api/temas");
+        const res = await fetch(apiUrl("/api/temas"));
         const data: Tema[] = await res.json();
 
         const filtrados = data.filter(

@@ -1,3 +1,4 @@
+import { apiUrl } from "../../../../shared/services/apiConfig";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -83,7 +84,7 @@ export default function ProyectosScreen() {
   useEffect(() => {
     const fetchProyectos = async () => {
       try {
-        const res = await fetch("http://192.168.1.72:5125/api/proyectos");
+        const res = await fetch(apiUrl("/api/proyectos"));
         const data: Proyecto[] = await res.json();
         setProyectos(data.filter((p) => p.idCampo === Number(idCampo)));
       } catch (error) {

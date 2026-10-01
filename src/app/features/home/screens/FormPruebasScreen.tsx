@@ -1,3 +1,4 @@
+import { apiUrl } from "../../../../shared/services/apiConfig";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -82,7 +83,7 @@ export default function PruebaScreen() {
       try {
         // 🔥 1. traer prueba
         const res = await fetch(
-          `http://192.168.1.72:5125/api/pruebas/${pruebaId}`
+          apiUrl(`/api/pruebas/${pruebaId}`)
         );
         if (!res.ok) {
           throw new Error(`Error HTTP ${res.status} al cargar prueba`);
@@ -147,7 +148,7 @@ export default function PruebaScreen() {
       setFinished(true);
 
       try {
-        await fetch("http://192.168.1.72:5125/api/resultados", {
+        await fetch(apiUrl("/api/resultados"), {
           method: "POST",
           cache: "no-store",
           headers: {

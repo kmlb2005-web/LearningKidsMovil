@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Markdown from "react-native-markdown-display";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { chatMath } from "../../../../shared/services/mathTutorApi";
 
@@ -111,8 +112,8 @@ export default function ChatScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 60 : 80}
     >
       <SafeAreaView style={styles.container}>
         {/* HEADER */}
@@ -173,14 +174,13 @@ export default function ChatScreen() {
                 msg.esLouz ? styles.botBubble : styles.userBubble,
               ]}
             >
-              <Text
-                style={[
-                  styles.bubbleText,
-                  msg.esLouz ? styles.botText : styles.userText,
-                ]}
-              >
-                {msg.texto}
-              </Text>
+              {msg.esLouz ? (
+                <Markdown style={markdownStyles}>{msg.texto}</Markdown>
+              ) : (
+                <Text style={[styles.bubbleText, styles.userText]}>
+                  {msg.texto}
+                </Text>
+              )}
             </View>
           </View>
         ))}
@@ -430,7 +430,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     marginTop: 10,
-    marginBottom: 140,
   },
 
   row: {
@@ -465,10 +464,6 @@ const styles = StyleSheet.create({
   typingText: { color: "#64748b", padding: 14 },
 
   bottomArea: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
     backgroundColor: "#fff",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
@@ -563,3 +558,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+
+const markdownStyles = {
+  body: { color: "#1e293b", fontSize: 15, lineHeight: 22 },
+  heading1: { fontSize: 18, fontWeight: "bold" as const, marginBottom: 4 },
+  heading2: { fontSize: 16, fontWeight: "bold" as const, marginBottom: 4 },
+  heading3: { fontSize: 15, fontWeight: "bold" as const, marginBottom: 4 },
+  strong: { fontWeight: "bold" as const },
+  em: { fontStyle: "italic" as const },
+  bullet_list: { marginLeft: 8 },
+  ordered_list: { marginLeft: 8 },
+  code_inline: { backgroundColor: "#f1f5f9", borderRadius: 4, paddingHorizontal: 4, fontFamily: "monospace" },
+  fence: { backgroundColor: "#f1f5f9", borderRadius: 8, padding: 10 },
+  blockquote: { borderLeftWidth: 3, borderLeftColor: "#94a3b8", paddingLeft: 10, color: "#64748b" },
+};

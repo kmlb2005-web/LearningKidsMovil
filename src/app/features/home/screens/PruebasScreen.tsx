@@ -1,3 +1,4 @@
+import { apiUrl } from "../../../../shared/services/apiConfig";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -123,7 +124,7 @@ export default function PruebasScreen() {
       setErrorMessage("");
       const requestTs = Date.now();
 
-      const response = await fetch(`http://192.168.1.72:5125/api/pruebas?ts=${requestTs}`, {
+      const response = await fetch(apiUrl(`/api/pruebas?ts=${requestTs}`), {
         cache: "no-store",
       });
       const data = (await response.json()) as Prueba[];
@@ -161,7 +162,7 @@ export default function PruebasScreen() {
         filtered.map(async (item) => {
           try {
             const res = await fetch(
-              `http://192.168.1.72:5125/api/resultados/alumno/${alumnoId}/prueba/${item.idPrueba}?ts=${requestTs}`,
+              apiUrl(`/api/resultados/alumno/${alumnoId}/prueba/${item.idPrueba}?ts=${requestTs}`),
               {
                 cache: "no-store",
               }

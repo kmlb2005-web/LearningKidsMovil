@@ -1,3 +1,4 @@
+import { apiUrl } from "../../../../shared/services/apiConfig";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -72,7 +73,7 @@ export default function CamposFormScreen() {
     const fetchFields = async () => {
       try {
         const res = await fetch(
-          "http://192.168.1.72:5125/api/camposFormativos"
+          apiUrl("/api/camposFormativos")
         );
         const data: ApiField[] = await res.json();
 
