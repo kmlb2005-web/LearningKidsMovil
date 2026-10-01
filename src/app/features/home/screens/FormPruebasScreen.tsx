@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -315,6 +316,10 @@ export default function PruebaScreen() {
   /* ========= UI ========= */
   return (
     <SafeAreaView edges={["top"]} style={styles.container}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 130 }}
+      >
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -408,6 +413,7 @@ export default function PruebaScreen() {
           </Text>
         </TouchableOpacity>
       )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
